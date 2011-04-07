@@ -19,19 +19,20 @@ class PresemtApp(App):
         '''Create and show a screen widget
         '''
         screens = self.screens
+        modulename, clsname = name.split('.')
         if not name in screens:
-            m = __import__('screens.%s' % name, fromlist=[name])
-            print m
-            cls = getattr(m, '%sScreen' % name.capitalize())
-            screens[name] = cls()
+            m = __import__('screens.%s' % modulename, fromlist=[modulename])
+            cls = getattr(m, clsname)
+            screens[name] = cls(app=self)
         screen = screens[name]
         self.root.clear_widgets()
         self.root.add_widget(screen)
 
     def build(self):
         self.root = FloatLayout()
-        self.show('loading')
+        self.show('loading.LoadingScreen')
         # ... do loading here ^^
+        self.show('project.SelectorScreen')
 
 if __name__ in ('__main__', '__android__'):
     PresemtApp().run()

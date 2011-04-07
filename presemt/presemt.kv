@@ -4,3 +4,22 @@
 	AnchorLayout:
 		Label:
 			text: 'PreseMT is loading...'
+
+
+<SelectorScreen>:
+	AnchorLayout:
+		BoxLayout:
+			size: (600, 200)
+			size_hint: (None, None)
+			orientation: 'vertical'
+
+			Label:
+				font_size: 24
+				text: 'PreseMT'
+
+			BoxLayout:
+				spacing: 10
+				Button:
+					text: 'Create a new presentation'
+				Button:
+					text: 'Load an existing presentation'
