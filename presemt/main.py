@@ -15,6 +15,11 @@ class PresemtApp(App):
         super(PresemtApp, self).__init__()
         self.screens = {}
 
+    def create_empty_project(self):
+        '''Create and start an empty project
+        '''
+        self.show('presentation.MainScreen')
+
     def show(self, name):
         '''Create and show a screen widget
         '''

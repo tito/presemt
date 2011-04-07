@@ -19,7 +19,10 @@
 
 			BoxLayout:
 				spacing: 10
+
 				Button:
 					text: 'Create a new presentation'
+					on_release: root.app.create_empty_project()
+
 				Button:
 					text: 'Load an existing presentation'
