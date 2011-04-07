@@ -1,0 +1,8 @@
+*.so
+*.pyc
+*.pyo
+*~
+*.swp
+*.DS_Store
+*.kpf
+build/*
