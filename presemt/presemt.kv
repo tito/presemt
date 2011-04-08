@@ -5,24 +5,96 @@
 		Label:
 			text: 'PreseMT is loading...'
 
-
 <SelectorScreen>:
 	AnchorLayout:
+		Image:
+			on_touch_down: root.app.create_empty_project()
+			source: 'data/add.png'
+			size: self.texture_size
+			size_hint: None, None
+
+[DebugItem@BoxLayout]:
+	Label:
+		text: ctx.title
+	Label:
+		size_hint_y: None
+		height: self.texture_size[1] + 10
+		text: ctx.value
+
+<MainScreen>:
+	MainPlane:
+		id: plane
+		scale_min: 0.20
+		scale_max: 20
+
+	# Debugging
+	BoxLayout:
+		orientation: 'vertical'
+		size_hint: None, None
+		size: 250, 30
+		canvas:
+			Color:
+				rgba: (.5, .5, .5, .1)
+			Rectangle:
+				size: self.size
+				pos: self.pos
+		pos_hint: {'right': 1, 'y': 0}
+
 		BoxLayout:
-			size: (600, 200)
-			size_hint: (None, None)
-			orientation: 'vertical'
-
 			Label:
-				font_size: 24
-				text: 'PreseMT'
+				text: 'Position'
+			Label:
+				size_hint_y: None
+				height: self.texture_size[1] + 10
+				text: '%3.2f %3.2f' % plane.pos
+		BoxLayout:
+			Label:
+				text: 'Scale'
+			Label:
+				size_hint_y: None
+				height: self.texture_size[1] + 10
+				text: '%3.2f' % plane.scale
+		BoxLayout:
+			Label:
+				text: 'Rotation'
+			Label:
+				size_hint_y: None
+				height: self.texture_size[1] + 10
+				text: '%3.2f' % plane.rotation
 
-			BoxLayout:
-				spacing: 10
+		BoxLayout:
+			Label:
+				text: 'Grid Spacing'
+			Slider:
+				size_hint_y: None
+				height: 40
+				on_value: plane.grid_spacing = int(args[1])
+				value: plane.grid_spacing
+				min: 10
+				max: 100
 
-				Button:
-					text: 'Create a new presentation'
-					on_release: root.app.create_empty_project()
+	# Toolbar
+	BoxLayout:
+		orientation: 'vertical'
+		size_hint_x: None
+		width: 30
 
-				Button:
-					text: 'Load an existing presentation'
+		canvas:
+			Color:
+				rgba: (.5, .5, .5, .1)
+			Rectangle:
+				size: self.size
+				pos: self.pos
+
+		Image:
+			source: 'data/text.png'
+			size: self.texture_size
+			size_hint: None, None
+		Image:
+			source: 'data/image.png'
+			size: self.texture_size
+			size_hint: None, None
+		Image:
+			source: 'data/video.png'
+			size: self.texture_size
+			size_hint: None, None

@@ -37,7 +37,8 @@ class PresemtApp(App):
         self.root = FloatLayout()
         self.show('loading.LoadingScreen')
         # ... do loading here ^^
-        self.show('project.SelectorScreen')
+        #self.show('project.SelectorScreen')
+        self.show('presentation.MainScreen')
 
 if __name__ in ('__main__', '__android__'):
     PresemtApp().run()
