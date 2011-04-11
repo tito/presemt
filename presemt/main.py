@@ -9,6 +9,10 @@ kivy.require('1.0.5')
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 
+# even if it's not used in this current files
+# behaviours are used into kv
+import behaviours
+
 
 class PresemtApp(App):
     def __init__(self):

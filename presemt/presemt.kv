@@ -13,21 +13,80 @@
 			size: self.texture_size
 			size_hint: None, None
 
-[DebugItem@BoxLayout]:
+<PlaneObject>:
+	canvas:
+		Color:
+			rgba: 0, 1, 0, .4
+		Rectangle:
+			size: self.size
+
+<TextPlaneObject>:
+	size: label.size
 	Label:
-		text: ctx.title
-	Label:
-		size_hint_y: None
-		height: self.texture_size[1] + 10
-		text: ctx.value
+		id: label
+		pos: self.pos
+		size: self.texture_size
+		text: root.text
+		font_size: root.font_size
+
+<ImagePlaneObject>:
+	size: image.size
+	Image:
+		id: image
+		size: self.texture_size
+		source: root.source
+
+<VideoPlaneObject>:
+	Video:
+		source: root.source
+
+[ToolbarButton@ButtonBehavior+Image]:
+	source: 'data/%s.png' % ctx.image
+	size: self.texture_size
+	size_hint: None, None
+	on_press: ctx.callback(self.button_touch)
+	button_grab: True
+	canvas.before:
+		Color:
+			rgba: 1, 1, 1, 0.5 if self.is_hover else 0
+		Rectangle:
+			pos: self.pos
+			size: self.size
+
 
 <MainScreen>:
+	plane: plane
+
 	MainPlane:
 		id: plane
 		scale_min: 0.20
 		scale_max: 20
 
-	# Debugging
+	# Toolbar
+	BoxLayout:
+		orientation: 'vertical'
+		size_hint_x: None
+		width: 30
+
+		canvas:
+			Color:
+				rgba: (.1, .1, .1, .9)
+			Rectangle:
+				size: self.size
+				pos: self.pos
+
+		ToolbarButton:
+			image: 'text'
+			callback: root.create_text
+		ToolbarButton:
+			image: 'image'
+			callback: root.create_image
+		ToolbarButton:
+			image: 'video'
+			callback: root.create_video
+
+# Debugging stuff, merge if you want in the MainScreen rule
+<azdpok>:
 	BoxLayout:
 		orientation: 'vertical'
 		size_hint: None, None
@@ -73,28 +132,3 @@
 				min: 10
 				max: 100
 
-	# Toolbar
-	BoxLayout:
-		orientation: 'vertical'
-		size_hint_x: None
-		width: 30
-
-		canvas:
-			Color:
-				rgba: (.5, .5, .5, .1)
-			Rectangle:
-				size: self.size
-				pos: self.pos
-
-		Image:
-			source: 'data/text.png'
-			size: self.texture_size
-			size_hint: None, None
-		Image:
-			source: 'data/image.png'
-			size: self.texture_size
-			size_hint: None, None
-		Image:
-			source: 'data/video.png'
-			size: self.texture_size
-			size_hint: None, None
