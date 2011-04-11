@@ -16,7 +16,7 @@
 <PlaneObject>:
 	canvas:
 		Color:
-			rgba: 0, 1, 0, .4
+			rgba: (1, 1, 0, .4) if self.selected else (0, 1, 0, .4)
 		Rectangle:
 			size: self.size
 
@@ -61,6 +61,11 @@
 		id: plane
 		scale_min: 0.20
 		scale_max: 20
+		canvas.after:
+			Color:
+				rgba: 1, 0, 0, .5
+			Line:
+				points: root.selection_points
 
 	# Toolbar
 	BoxLayout:
