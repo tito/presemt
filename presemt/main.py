@@ -9,6 +9,10 @@ kivy.require('1.0.5')
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 
+# even if it's not used in this current files
+# behaviours are used into kv
+import behaviours
+
 
 class PresemtApp(App):
     def __init__(self):
@@ -37,7 +41,8 @@ class PresemtApp(App):
         self.root = FloatLayout()
         self.show('loading.LoadingScreen')
         # ... do loading here ^^
-        self.show('project.SelectorScreen')
+        #self.show('project.SelectorScreen')
+        self.show('presentation.MainScreen')
 
 
 if __name__ in ('__main__', '__android__'):

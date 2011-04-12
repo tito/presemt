@@ -5,24 +5,135 @@
 		Label:
 			text: 'PreseMT is loading...'
 
-
 <SelectorScreen>:
 	AnchorLayout:
+		Image:
+			on_touch_down: root.app.create_empty_project()
+			source: 'data/add.png'
+			size: self.texture_size
+			size_hint: None, None
+
+<PlaneObject>:
+	canvas:
+		Color:
+			rgba: (1, 1, 0, .4) if self.selected else (0, 1, 0, .4)
+		Rectangle:
+			size: self.size
+
+<TextPlaneObject>:
+	size: label.size
+	Label:
+		id: label
+		pos: self.pos
+		size: self.texture_size
+		text: root.text
+		font_size: root.font_size
+
+<ImagePlaneObject>:
+	size: image.size
+	Image:
+		id: image
+		size: self.texture_size
+		source: root.source
+
+<VideoPlaneObject>:
+	Video:
+		source: root.source
+
+[ToolbarButton@ButtonBehavior+Image]:
+	source: 'data/%s.png' % ctx.image
+	size: self.texture_size
+	size_hint: None, None
+	on_press: ctx.callback(self.button_touch)
+	button_grab: True
+	canvas.before:
+		Color:
+			rgba: 1, 1, 1, 0.5 if self.is_hover else 0
+		Rectangle:
+			pos: self.pos
+			size: self.size
+
+
+<MainScreen>:
+	plane: plane
+
+	MainPlane:
+		id: plane
+		scale_min: 0.20
+		scale_max: 20
+		canvas.after:
+			Color:
+				rgba: 1, 0, 0, .5
+			Line:
+				points: root.selection_points
+
+	# Toolbar
+	BoxLayout:
+		orientation: 'vertical'
+		size_hint_x: None
+		width: 30
+
+		canvas:
+			Color:
+				rgba: (.1, .1, .1, .9)
+			Rectangle:
+				size: self.size
+				pos: self.pos
+
+		ToolbarButton:
+			image: 'text'
+			callback: root.create_text
+		ToolbarButton:
+			image: 'image'
+			callback: root.create_image
+		ToolbarButton:
+			image: 'video'
+			callback: root.create_video
+
+# Debugging stuff, merge if you want in the MainScreen rule
+<azdpok>:
+	BoxLayout:
+		orientation: 'vertical'
+		size_hint: None, None
+		size: 250, 30
+		canvas:
+			Color:
+				rgba: (.5, .5, .5, .1)
+			Rectangle:
+				size: self.size
+				pos: self.pos
+		pos_hint: {'right': 1, 'y': 0}
+
 		BoxLayout:
-			size: (600, 200)
-			size_hint: (None, None)
-			orientation: 'vertical'
-
 			Label:
-				font_size: 24
-				text: 'PreseMT'
+				text: 'Position'
+			Label:
+				size_hint_y: None
+				height: self.texture_size[1] + 10
+				text: '%3.2f %3.2f' % plane.pos
+		BoxLayout:
+			Label:
+				text: 'Scale'
+			Label:
+				size_hint_y: None
+				height: self.texture_size[1] + 10
+				text: '%3.2f' % plane.scale
+		BoxLayout:
+			Label:
+				text: 'Rotation'
+			Label:
+				size_hint_y: None
+				height: self.texture_size[1] + 10
+				text: '%3.2f' % plane.rotation
 
-			BoxLayout:
-				spacing: 10
+		BoxLayout:
+			Label:
+				text: 'Grid Spacing'
+			Slider:
+				size_hint_y: None
+				height: 40
+				on_value: plane.grid_spacing = int(args[1])
+				value: plane.grid_spacing
+				min: 10
+				max: 100
 
-				Button:
-					text: 'Create a new presentation'
-					on_release: root.app.create_empty_project()
-
-				Button:
-					text: 'Load an existing presentation'
