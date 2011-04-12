@@ -2,163 +2,163 @@
 #:import os
 
 <LoadingScreen>:
-	AnchorLayout:
-		Label:
-			text: 'PreseMT is loading...'
+    AnchorLayout:
+        Label:
+            text: 'PreseMT is loading...'
 
 <SelectorScreen>:
-	AnchorLayout:
-		Image:
-			on_touch_down: root.app.create_empty_project()
-			source: 'data/add.png'
-			size: self.texture_size
-			size_hint: None, None
+    AnchorLayout:
+        Image:
+            on_touch_down: root.app.create_empty_project()
+            source: 'data/add.png'
+            size: self.texture_size
+            size_hint: None, None
 
 <PlaneObject>:
-	canvas:
-		Color:
-			rgba: (1, 1, 0, .4) if self.selected else (0, 1, 0, .4)
-		Rectangle:
-			size: self.size
+    canvas:
+        Color:
+            rgba: (1, 1, 0, .4) if self.selected else (0, 1, 0, .4)
+        Rectangle:
+            size: self.size
 
 <TextPlaneObject>:
-	size: label.size
-	Label:
-		id: label
-		pos: self.pos
-		size: self.texture_size
-		text: root.text
-		font_size: root.font_size
+    size: label.size
+    Label:
+        id: label
+        pos: self.pos
+        size: self.texture_size
+        text: root.text
+        font_size: root.font_size
 
 <ImagePlaneObject>:
-	size: image.size
-	Image:
-		id: image
-		size: self.texture_size
-		source: root.source
+    size: image.size
+    Image:
+        id: image
+        size: self.texture_size
+        source: root.source
 
 <VideoPlaneObject>:
-	Video:
-		source: root.source
+    Video:
+        source: root.source
 
 #
 # Panels
 #
 <Panel>:
-	x: 80
+    x: 80
 
 <TextPanel>:
-	width: 300
-	size_hint_x: None
-	canvas:
-		Color:
-			rgba: (.1, .1, .1, .9)
-		Rectangle:
-			pos: self.pos
-			size: self.size
+    width: 300
+    size_hint_x: None
+    canvas:
+        Color:
+            rgba: (.1, .1, .1, .9)
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
-	BoxLayout:
-		pos: root.pos
-		Button:
-			on_press: root.ctrl.toggle_panel()
+    BoxLayout:
+        pos: root.pos
+        Button:
+                    on_press: root.ctrl.toggle_panel()
 
 [ToolbarButton@ButtonBehavior+Image]:
-	source: 'data/%s.png' % ctx.image
-	size: self.texture_size
-	size_hint: None, None
-	on_press: ctx.callback()
-	button_grab: True
-	canvas.before:
-		Color:
-			rgba: 1, 1, 1, 0.5 if self.is_hover else 0
-		Rectangle:
-			pos: self.pos
-			size: self.size
+    source: 'data/%s.png' % ctx.image
+    size: self.texture_size
+    size_hint: None, None
+    on_press: ctx.callback()
+    button_grab: True
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 0.5 if self.is_hover else 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
 <MainScreen>:
-	plane: plane
-	config: config
+    plane: plane
+    config: config
 
-	MainPlane:
-		id: plane
-		scale_min: 0.20
-		scale_max: 20
-		canvas.after:
-			Color:
-				rgba: 1, 0, 0, .5
-			Line:
-				points: root.selection_points
+    MainPlane:
+        id: plane
+        scale_min: 0.20
+        scale_max: 20
+        canvas.after:
+            Color:
+                rgba: 1, 0, 0, .5
+            Line:
+                points: root.selection_points
 
-	# Config menu
-	FloatLayout:
-		size_hint_x: None
-		x: 30
-		id: config
+    # Config menu
+    FloatLayout:
+        size_hint_x: None
+        x: 30
+        id: config
 
-	# Toolbar
-	BoxLayout:
-		orientation: 'vertical'
-		size_hint_x: None
-		width: 80
+    # Toolbar
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_x: None
+        width: 80
 
-		canvas:
-			Color:
-				rgba: (.1, .1, .1, .9)
-			Rectangle:
-				size: self.size
-				pos: self.pos
+        canvas:
+            Color:
+                rgba: (.1, .1, .1, .9)
+            Rectangle:
+                size: self.size
+                pos: self.pos
 
-		ToolbarButton:
-			image: 'text'
-			callback: root.toggle_text_panel
-		ToolbarButton:
-			image: 'image'
-			callback: root.toggle_media_panel
+        ToolbarButton:
+            image: 'text'
+            callback: root.toggle_text_panel
+        ToolbarButton:
+            image: 'image'
+            callback: root.toggle_media_panel
 
 # Debugging stuff, merge if you want in the MainScreen rule
 <azdpok>:
-	BoxLayout:
-		orientation: 'vertical'
-		size_hint: None, None
-		size: 250, 30
-		canvas:
-			Color:
-				rgba: (.5, .5, .5, .1)
-			Rectangle:
-				size: self.size
-				pos: self.pos
-		pos_hint: {'right': 1, 'y': 0}
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: None, None
+        size: 250, 30
+        canvas:
+            Color:
+                rgba: (.5, .5, .5, .1)
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        pos_hint: {'right': 1, 'y': 0}
 
-		BoxLayout:
-			Label:
-				text: 'Position'
-			Label:
-				size_hint_y: None
-				height: self.texture_size[1] + 10
-				text: '%3.2f %3.2f' % plane.pos
-		BoxLayout:
-			Label:
-				text: 'Scale'
-			Label:
-				size_hint_y: None
-				height: self.texture_size[1] + 10
-				text: '%3.2f' % plane.scale
-		BoxLayout:
-			Label:
-				text: 'Rotation'
-			Label:
-				size_hint_y: None
-				height: self.texture_size[1] + 10
-				text: '%3.2f' % plane.rotation
+        BoxLayout:
+            Label:
+                text: 'Position'
+            Label:
+                size_hint_y: None
+                height: self.texture_size[1] + 10
+                text: '%3.2f %3.2f' % plane.pos
+        BoxLayout:
+            Label:
+                text: 'Scale'
+            Label:
+                size_hint_y: None
+                height: self.texture_size[1] + 10
+                text: '%3.2f' % plane.scale
+        BoxLayout:
+            Label:
+                text: 'Rotation'
+            Label:
+                size_hint_y: None
+                height: self.texture_size[1] + 10
+                text: '%3.2f' % plane.rotation
 
-		BoxLayout:
-			Label:
-				text: 'Grid Spacing'
-			Slider:
-				size_hint_y: None
-				height: 40
-				on_value: plane.grid_spacing = int(args[1])
-				value: plane.grid_spacing
-				min: 10
-				max: 100
+        BoxLayout:
+            Label:
+                text: 'Grid Spacing'
+            Slider:
+                size_hint_y: None
+                height: 40
+                on_value: plane.grid_spacing = int(args[1])
+                value: plane.grid_spacing
+                min: 10
+                max: 100
 
