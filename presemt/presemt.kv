@@ -40,11 +40,32 @@
 	Video:
 		source: root.source
 
+#
+# Panels
+#
+<Panel>:
+	x: 80
+
+<TextPanel>:
+	width: 300
+	size_hint_x: False
+	canvas:
+		Color:
+			rgba: (.1, .1, .1, .9)
+		Rectangle:
+			pos: self.pos
+			size: self.size
+
+	BoxLayout:
+		pos: root.pos
+		Button:
+			on_press: root.ctrl.toggle_panel()
+
 [ToolbarButton@ButtonBehavior+Image]:
 	source: 'data/%s.png' % ctx.image
 	size: self.texture_size
 	size_hint: None, None
-	on_press: ctx.callback(self.button_touch)
+	on_press: ctx.callback()
 	button_grab: True
 	canvas.before:
 		Color:
@@ -53,9 +74,9 @@
 			pos: self.pos
 			size: self.size
 
-
 <MainScreen>:
 	plane: plane
+	config: config
 
 	MainPlane:
 		id: plane
@@ -67,11 +88,17 @@
 			Line:
 				points: root.selection_points
 
+	# Config menu
+	FloatLayout:
+		size_hint_x: None
+		x: 30
+		id: config
+
 	# Toolbar
 	BoxLayout:
 		orientation: 'vertical'
 		size_hint_x: None
-		width: 30
+		width: 80
 
 		canvas:
 			Color:
@@ -82,13 +109,10 @@
 
 		ToolbarButton:
 			image: 'text'
-			callback: root.create_text
+			callback: root.toggle_text_panel
 		ToolbarButton:
 			image: 'image'
-			callback: root.create_image
-		ToolbarButton:
-			image: 'video'
-			callback: root.create_video
+			callback: root.toggle_media_panel
 
 # Debugging stuff, merge if you want in the MainScreen rule
 <azdpok>:

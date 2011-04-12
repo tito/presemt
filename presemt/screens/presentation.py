@@ -4,8 +4,10 @@ from kivy.uix.scatter import ScatterPlane, Scatter
 from kivy.clock import Clock
 from kivy.graphics import Color, Line
 from kivy.factory import Factory
+from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import NumericProperty, ObjectProperty, StringProperty, \
         BooleanProperty, ListProperty
+from kivy.animation import Animation
 
 default_image = join(dirname(__file__), '..', 'data', 'tests', 'faust_github.jpg')
 
@@ -32,6 +34,28 @@ def point_inside_polygon(x,y,poly):
 
     return inside
 
+#
+# Panel for configuration
+# Panel have open() and close() hook, to know when they are displayed or not
+#
+
+class Panel(FloatLayout):
+    ctrl = ObjectProperty(None)
+    def open(self):
+        pass
+    def close(self):
+        pass
+
+class TextPanel(Panel):
+    pass
+
+class MediaPanel(Panel):
+    pass
+
+
+#
+# Objects that will be added on the plane
+#
 
 class PlaneObject(Scatter):
 
@@ -45,8 +69,10 @@ class PlaneObject(Scatter):
             touch.grab(self)
 
     def configure(self):
-        # call the configuration interface for the object
-        print 'show configure interface'
+        pass
+
+    def get_configure(self):
+        pass
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos) and touch.is_double_tap:
@@ -66,6 +92,10 @@ class TextPlaneObject(PlaneObject):
 
     font_size = NumericProperty(48)
 
+    def get_configure(self):
+        from kivy.uix.button import Button
+        return Button(text='Hello World')
+
 
 class ImagePlaneObject(PlaneObject):
 
@@ -77,15 +107,24 @@ class VideoPlaneObject(PlaneObject):
     source = StringProperty(None)
 
 
+#
+# Main screen, act as a controler for everybody
+#
+
 class MainScreen(Screen):
 
     plane = ObjectProperty(None)
+
+    config = ObjectProperty(None)
 
     do_selection = BooleanProperty(False)
 
     selection_points = ListProperty([0, 0])
 
     def __init__(self, **kwargs):
+        self._panel = None
+        self._panel_text = None
+        self._panel_media = None
         super(MainScreen, self).__init__(**kwargs)
 
     def _create_object(self, cls, touch, pos):
@@ -135,6 +174,8 @@ class MainScreen(Screen):
 
     def selection_align(self):
         childs = [x for x in self.plane.children if x.selected]
+        if not childs:
+            return
         # do align on x
         left = min([x.x for x in childs])
         right = max([x.right for x in childs])
@@ -157,6 +198,43 @@ class MainScreen(Screen):
     def create_video(self, touch=None, pos=None):
         self._create_object(VideoPlaneObject, touch, pos)
 
+    def get_text_panel(self):
+        if not self._panel_text:
+            self._panel_text = TextPanel(ctrl=self)
+        return self._panel_text
+
+    def get_media_panel(self):
+        if not self._panel_media:
+            self._panel_media = MediaPanel(ctrl=self)
+        return self._panel_media
+
+    def toggle_panel(self, name=None):
+        panel = None
+        if name:
+            panel = getattr(self, 'get_%s_panel' % name)()
+        if self._panel:
+            self._panel.close()
+            self.config.remove_widget(self._panel)
+            same = self._panel is panel
+            self._panel = None
+            if same:
+                return
+        if panel:
+            self._panel = panel
+            self.config.add_widget(panel)
+            self._panel.open()
+
+
+    # used for kv button
+    def toggle_text_panel(self):
+        self.toggle_panel('text')
+
+    def toggle_media_panel(self):
+        self.toggle_panel('media')
+
+#
+# Scatter plane with grid
+#
 
 class MainPlane(ScatterPlane):
 
