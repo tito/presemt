@@ -49,7 +49,7 @@ class Panel(FloatLayout):
 class TextPanel(Panel):
     pass
 
-class MediaPanel(Panel):
+class LocalFilePanel(Panel):
     pass
 
 
@@ -124,7 +124,7 @@ class MainScreen(Screen):
     def __init__(self, **kwargs):
         self._panel = None
         self._panel_text = None
-        self._panel_media = None
+        self._panel_localfile = None
         super(MainScreen, self).__init__(**kwargs)
 
     def _create_object(self, cls, touch, pos):
@@ -135,36 +135,36 @@ class MainScreen(Screen):
             obj.center = pos
         self.plane.add_widget(obj)
 
-    def on_touch_down(self, touch):
-        if not touch.is_double_tap:
-            return super(MainScreen, self).on_touch_down(touch)
-        if not self.do_selection:
-            self.do_selection = True
-            self.selection_points = []
-            x, y = self.plane.to_local(*touch.pos)
-            self.selection_points.append(x)
-            self.selection_points.append(y)
-            touch.grab(self)
-            return True
+   # def on_touch_down(self, touch):
+   #     if super(MainScreen, self).on_touch_down(touch):
+   #         return True
+   #     if not self.do_selection:
+   #         self.do_selection = True
+   #         self.selection_points = []
+   #         x, y = self.plane.to_local(*touch.pos)
+   #         self.selection_points.append(x)
+   #         self.selection_points.append(y)
+   #         touch.grab(self)
+   #         return True
 
-    def on_touch_move(self, touch):
-        if not touch.is_double_tap:
-            return super(MainScreen, self).on_touch_move(touch)
-        if touch.grab_current is self and self.do_selection:
-            x, y = self.plane.to_local(*touch.pos)
-            self.selection_points.append(x)
-            self.selection_points.append(y)
-            self.update_select()
+   # def on_touch_move(self, touch):
+   #     if super(MainScreen, self).on_touch_move(touch):
+   #         return True
+   #     if touch.grab_current is self and self.do_selection:
+   #         x, y = self.plane.to_local(*touch.pos)
+   #         self.selection_points.append(x)
+   #         self.selection_points.append(y)
+   #         self.update_select()
 
-    def on_touch_up(self, touch):
-        if not touch.is_double_tap:
-            return super(MainScreen, self).on_touch_up(touch)
-        if touch.grab_current is self and self.do_selection:
-            touch.ungrab(self)
-            self.update_select()
-            self.selection_align()
-            self.cancel_selection()
-            return True
+   # def on_touch_up(self, touch):
+   #     if super(MainScreen, self).on_touch_up(touch):
+   #         return True
+   #     if touch.grab_current is self and self.do_selection:
+   #         touch.ungrab(self)
+   #         self.update_select()
+   #         self.selection_align()
+   #         self.cancel_selection()
+   #         return True
 
     def update_select(self):
         s = self.selection_points
@@ -203,10 +203,10 @@ class MainScreen(Screen):
             self._panel_text = TextPanel(ctrl=self)
         return self._panel_text
 
-    def get_media_panel(self):
-        if not self._panel_media:
-            self._panel_media = MediaPanel(ctrl=self)
-        return self._panel_media
+    def get_localfile_panel(self):
+        if not self._panel_localfile:
+            self._panel_localfile = LocalFilePanel(ctrl=self)
+        return self._panel_localfile
 
     def toggle_panel(self, name=None):
         panel = None
@@ -229,8 +229,8 @@ class MainScreen(Screen):
     def toggle_text_panel(self):
         self.toggle_panel('text')
 
-    def toggle_media_panel(self):
-        self.toggle_panel('media')
+    def toggle_localfile_panel(self):
+        self.toggle_panel('localfile')
 
 #
 # Scatter plane with grid

@@ -1,5 +1,4 @@
 #:kivy 1.0
-#:import os
 
 <LoadingScreen>:
     AnchorLayout:
@@ -60,7 +59,43 @@
     BoxLayout:
         pos: root.pos
         Button:
-                    on_press: root.ctrl.toggle_panel()
+            on_press: root.ctrl.toggle_panel()
+
+<LocalFilePanel>:
+    width: 340
+    size_hint_x: None
+
+    canvas:
+        Color:
+            rgba: (0.2, .2, .2, .8)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+        pos: root.pos
+        size: root.size
+
+        FileChooserIconView:
+            show_hidden: False
+            filter: '*.png' if img.only else '*.avi' if vid.only else ''
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 40
+            ToggleButton:
+                id: img
+                only: self.state == 'down'
+                text: 'Images'
+                group: 'filetype'
+            ToggleButton:
+                id: vid
+                only: self.state == 'down'
+                text: 'Videos'
+                group: 'filetype'
+
 
 [ToolbarButton@ButtonBehavior+Image]:
     source: 'data/%s.png' % ctx.image
@@ -113,7 +148,7 @@
             callback: root.toggle_text_panel
         ToolbarButton:
             image: 'image'
-            callback: root.toggle_media_panel
+            callback: root.toggle_localfile_panel
 
 # Debugging stuff, merge if you want in the MainScreen rule
 <azdpok>:
