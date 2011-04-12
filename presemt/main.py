@@ -1,5 +1,5 @@
 '''
-PresMT - A presentation software
+PreseMT - A presentation software
 ================================
 '''
 
@@ -38,6 +38,7 @@ class PresemtApp(App):
         self.show('loading.LoadingScreen')
         # ... do loading here ^^
         self.show('project.SelectorScreen')
+
 
 if __name__ in ('__main__', '__android__'):
     PresemtApp().run()
