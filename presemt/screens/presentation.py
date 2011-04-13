@@ -1,6 +1,8 @@
 from math import sqrt
 from os.path import join, dirname, splitext
 from . import Screen
+from kivy.core.window import Window
+from kivy.vector import Vector
 from kivy.uix.scatter import ScatterPlane, Scatter
 from kivy.clock import Clock
 from kivy.graphics import Color, Line
@@ -142,6 +144,9 @@ class MainScreen(Screen):
         self._panel_text = None
         self._panel_localfile = None
         super(MainScreen, self).__init__(**kwargs)
+        # XXX
+        #self.plane.add_widget(ImagePlaneObject())
+        self._create_object(ImagePlaneObject, None, None)
 
     def _create_object(self, cls, touch, pos, **kwargs):
         if touch:
@@ -272,6 +277,9 @@ class MainPlane(ScatterPlane):
             grid_spacing=self._trigger_grid,
             grid_count=self._trigger_grid)
         self._trigger_grid()
+        self.register_event_type('on_scene_enter')
+        self.register_event_type('on_scene_leave')
+        self.all_children = []
 
     def _trigger_grid(self, *largs):
         Clock.unschedule(self.fill_grid)
@@ -282,9 +290,91 @@ class MainPlane(ScatterPlane):
         gs = self.grid_spacing
         gc = self.grid_count * gs
         with self.canvas:
-            Color(.1, .1, .1, .9)
+            Color(.9, .9, .9, .9)
             for x in xrange(-gc, gc, gs):
                 Line(points=(x, -gc, x, gc))
                 Line(points=(-gc, x, gc, x))
+
+    #
+    # Culling below
+    #
+
+    def is_visible(self, w):
+        '''
+        Determine if planeobject w (a scatter itself) is visible in the current
+        scatterplane viewport. Uses bounding circle check.
+        '''
+        # Get minimal bounding circle around widget
+        w_win_center = w.to_window(*w.center)
+        lwc = self.to_local(*w_win_center)
+        # XXX Why does this not work instead of the previous two?
+        #lwc = w.to_parent(*w.center)
+        corner = w.to_parent(0, 0)
+        r = Vector(*lwc).distance(Vector(*corner))
+
+        # Get minimal bounding circle around viewport
+        # TODO If an optimization is required
+        cp = self.to_local(*Window.center)
+        #ww, wh = Window.size
+        #topright = self.to_local(ww, wh)
+        botleft = self.to_local(0, 0)
+        wr = Vector(*cp).distance(botleft)
+
+        dist = Vector(*cp).distance(Vector(lwc))
+        if dist - r <= wr:
+            return True
+        return False
+
+    def transform_with_touch(self, touch):
+        #import pdb; pdb.set_trace()
+        self.cull_children()
+        super(MainPlane, self).transform_with_touch(touch)
+
+    def on_scene_enter(self, child):
+        print 'entering:', child
+
+    def on_scene_leave(self, child):
+        print 'leaving:', child
+
+    def cull_children(self):
+        old_children = self.children[:]
+        self._really_clear_widgets()
+
+        for child in reversed(self.all_children):
+            if self.is_visible(child):
+                self._really_add_widget(child)
+                if not child in old_children:
+                    self.dispatch('on_scene_enter', child)
+        for child in old_children:
+            if child not in self.children:
+                self.dispatch('on_scene_leave', child)
+
+    def add_widget(self, child):
+        assert isinstance(child, PlaneObject)
+
+        self.all_children.insert(0, child)
+        self._really_add_widget(child, front=True)
+
+    def remove_widget(self, child):
+        self.all_children.remove(child)
+        self._really_remove_widget(child)
+
+    def clear_widgets(self):
+        self.all_children = []
+        self._really_clear_widgets()
+
+    def _really_add_widget(self, child, front=False):
+        child.parent = self
+        self.children.insert(0, child)
+        self.canvas.add(child.canvas)
+
+    def _really_remove_widget(self, child):
+        self.children.remove(child)
+        self.canvas.remove(child.canvas)
+
+    def _really_clear_widgets(self):
+        for child in self.children[:]:
+            self._really_remove_widget(child)
+
 
 Factory.register('MainPlane', cls=MainPlane)
