@@ -180,6 +180,8 @@ class MainScreen(Screen):
         self._create_object(ImagePlaneObject, None, None)
 
     def _create_object(self, cls, touch, pos, **kwargs):
+        kwargs.setdefault('rotation', -self.plane.rotation)
+        kwargs.setdefault('scale', 1. / self.plane.scale)
         if touch:
             pos = self.plane.to_local(*touch.pos)
         obj = cls(touch_follow=touch, **kwargs)
