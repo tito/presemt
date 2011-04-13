@@ -1,4 +1,5 @@
 #:kivy 1.0
+#:import fc functools
 
 <LoadingScreen>:
     AnchorLayout:
@@ -45,28 +46,21 @@
 #
 # Panels
 #
+[PanelTitle@Label]:
+    font_size: 24
+    text: ctx.title
+    size_hint_y: None
+    height: self.texture_size[1]
+    text_size: (self.width, None)
+[PanelTitle2@Label]:
+    font_size: 24
+    text: ctx.title
+    size_hint_y: None
+    height: self.texture_size[1]
+    text_size: (self.width, None)
+
 <Panel>:
     x: 80
-
-<TextPanel>:
-    width: 300
-    size_hint_x: None
-    canvas:
-        Color:
-            rgba: (.1, .1, .1, .9)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    BoxLayout:
-        pos: root.pos
-        Button:
-            on_press: root.ctrl.toggle_panel()
-
-<LocalFilePanel>:
-    width: 340
-    size_hint_x: None
-
     canvas:
         Color:
             rgba: (0.2, .2, .2, .8)
@@ -74,10 +68,87 @@
             pos: self.pos
             size: self.size
 
+[ImageButtonPanel@ButtonBehavior+Image]:
+    source: ctx.source
+    size: self.texture_size
+    size_hint_x: None
+    button_grab: True
+    on_press: ctx.callback()
+
+<ImageButton>:
+    width: self.texture_size[0]
+    button_grab: True
+    size_hint_x: None
+
+<TextStackEntry>:
+    size_hint_y: None
+    size: [max(40, x + 20) for x in label.texture_size]
+    padding: 10
+
+    canvas.before:
+        Color:
+            rgba: .1, .1, .1, .5
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    Label:
+        id: label
+        text: root.text
+        text_size: (self.width - 20, None)
+
+    ImageButton:
+        source: 'data/text-del.png'
+        on_press: root.panel.stack.remove_widget(root)
+
+
+<TextPanel>:
+    width: 300
+    size_hint_x: None
+    textinput: textinput
+    stack: stack
+
+    BoxLayout:
+        padding: 10
+        spacing: 10
+        pos: root.pos
+        orientation: 'vertical'
+
+        PanelTitle:
+            title: 'Add a text'
+
+        BoxLayout:
+            size_hint_y: None
+            height: 32
+            spacing: 20
+
+            TextInput:
+                id: textinput
+
+            ImageButtonPanel:
+                source: 'data/text-add.png'
+                callback: fc.partial(root.add_text)
+
+        ScrollView:
+            StackLayout:
+                id: stack
+                size_hint_y: None
+
+
+
+<LocalFilePanel>:
+    width: 340
+    size_hint_x: None
+
     BoxLayout:
         orientation: 'vertical'
         pos: root.pos
         size: root.size
+        padding: 10
+        spacing: 10
+
+        PanelTitle:
+            title: 'Add a media'
 
         FileChooserIconView:
             path: u'~'
@@ -87,7 +158,8 @@
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
-            height: 30
+            height: 40
+            spacing: 10
             ToggleButton:
                 id: img
                 only: self.state == 'down'
