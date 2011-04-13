@@ -10,6 +10,7 @@ from kivy.properties import NumericProperty, ObjectProperty, StringProperty, \
         BooleanProperty, ListProperty
 from kivy.animation import Animation
 from kivy.core.image import ImageLoader
+from kivy.lang import Builder
 
 default_image = join(dirname(__file__), '..', 'data', 'tests', 'faust_github.jpg')
 
@@ -60,8 +61,38 @@ class Panel(FloatLayout):
     def close(self):
         pass
 
-class TextPanel(Panel):
+
+class TextStackEntry(Factory.BoxLayout):
+    panel = ObjectProperty(None)
+    text = StringProperty('')
+    ctrl = ObjectProperty(None)
+    def on_touch_down(self, touch):
+        if super(TextStackEntry, self).on_touch_down(touch):
+            return True
+        pos = self.ctrl.center
+        self.ctrl.create_text(pos=pos, text=self.text)
+
+Factory.register('TextStackEntry', cls=TextStackEntry)
+
+class ImageButton(Factory.ButtonBehavior, Factory.Image):
     pass
+
+Factory.register('ImageButton', cls=ImageButton)
+
+class TextPanel(Panel):
+
+    textinput = ObjectProperty(None)
+
+    stack = ObjectProperty(None)
+
+    def add_text(self):
+        text = self.textinput.text.strip()
+        self.textinput.text = ''
+        if not text:
+            return
+        label = TextStackEntry(text=text, ctrl=self.ctrl, panel=self)
+        self.stack.add_widget(label)
+
 
 class LocalFilePanel(Panel):
     imgtypes = ListProperty(prefix(SUPPORTED_IMG))
@@ -148,7 +179,9 @@ class MainScreen(Screen):
             pos = self.plane.to_local(*touch.pos)
         obj = cls(touch_follow=touch, **kwargs)
         if pos:
-            obj.center = touch.pos
+            pos = self.plane.to_local(*pos)
+            print 'pos', pos
+            obj.center = pos
         self.plane.add_widget(obj)
 
    # def on_touch_down(self, touch):
@@ -205,8 +238,8 @@ class MainScreen(Screen):
         for child in self.plane.children:
             child.selected = False
 
-    def create_text(self, touch=None, pos=None):
-        self._create_object(TextPlaneObject, touch, pos)
+    def create_text(self, touch=None, pos=None, **kwargs):
+        self._create_object(TextPlaneObject, touch, pos, **kwargs)
 
     def from_localfile(self, touch, **kwargs):
         source = kwargs['source']
