@@ -1,4 +1,5 @@
-from os.path import join, dirname
+from math import sqrt
+from os.path import join, dirname, splitext
 from . import Screen
 from kivy.uix.scatter import ScatterPlane, Scatter
 from kivy.clock import Clock
@@ -8,8 +9,21 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import NumericProperty, ObjectProperty, StringProperty, \
         BooleanProperty, ListProperty
 from kivy.animation import Animation
+from kivy.core.image import ImageLoader
 
 default_image = join(dirname(__file__), '..', 'data', 'tests', 'faust_github.jpg')
+
+
+def prefix(exts):
+    return ['*.' + t for t in exts]
+
+SUPPORTED_IMG = []
+for loader in ImageLoader.loaders:
+    for ext in loader.extensions():
+        if ext not in SUPPORTED_IMG:
+            SUPPORTED_IMG.append(ext)
+# OK, who has a better idea on how to do that that is still acceptable?
+SUPPORTED_VID = ['avi', 'mpg', 'mpeg']
 
 
 def point_inside_polygon(x,y,poly):
@@ -50,7 +64,9 @@ class TextPanel(Panel):
     pass
 
 class LocalFilePanel(Panel):
-    pass
+    imgtypes = ListProperty(prefix(SUPPORTED_IMG))
+    vidtypes = ListProperty(prefix(SUPPORTED_VID))
+    suptypes = ListProperty(prefix(SUPPORTED_IMG + SUPPORTED_VID))
 
 
 #
@@ -127,12 +143,12 @@ class MainScreen(Screen):
         self._panel_localfile = None
         super(MainScreen, self).__init__(**kwargs)
 
-    def _create_object(self, cls, touch, pos):
+    def _create_object(self, cls, touch, pos, **kwargs):
         if touch:
             pos = self.plane.to_local(*touch.pos)
-        obj = cls(touch_follow=touch)
+        obj = cls(touch_follow=touch, **kwargs)
         if pos:
-            obj.center = pos
+            obj.center = touch.pos
         self.plane.add_widget(obj)
 
    # def on_touch_down(self, touch):
@@ -192,11 +208,19 @@ class MainScreen(Screen):
     def create_text(self, touch=None, pos=None):
         self._create_object(TextPlaneObject, touch, pos)
 
-    def create_image(self, touch=None, pos=None):
-        self._create_object(ImagePlaneObject, touch, pos)
+    def from_localfile(self, touch, **kwargs):
+        source = kwargs['source']
+        ext = splitext(source)[-1][1:]
+        if ext in SUPPORTED_IMG:
+            self.create_image(touch, **kwargs)
+        elif ext in SUPPORTED_VID:
+            self.create_video(touch, **kwargs)
 
-    def create_video(self, touch=None, pos=None):
-        self._create_object(VideoPlaneObject, touch, pos)
+    def create_image(self, touch=None, pos=None, **kwargs):
+        self._create_object(ImagePlaneObject, touch, pos, **kwargs)
+
+    def create_video(self, touch=None, pos=None, **kwargs):
+        self._create_object(VideoPlaneObject, touch, pos, **kwargs)
 
     def get_text_panel(self):
         if not self._panel_text:

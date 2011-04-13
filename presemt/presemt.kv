@@ -14,6 +14,7 @@
             size_hint: None, None
 
 <PlaneObject>:
+    size_hint: None, None
     canvas:
         Color:
             rgba: (1, 1, 0, .4) if self.selected else (0, 1, 0, .4)
@@ -38,6 +39,7 @@
 
 <VideoPlaneObject>:
     Video:
+        play: True
         source: root.source
 
 #
@@ -78,13 +80,14 @@
         size: root.size
 
         FileChooserIconView:
-            show_hidden: False
-            filter: '*.png' if img.only else '*.avi' if vid.only else ''
+            path: u'~'
+            filters: root.imgtypes if img.only else root.vidtypes if vid.only else root.suptypes
+            on_submit: root.ctrl.from_localfile(args[2], source=args[1][0])
 
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
-            height: 40
+            height: 30
             ToggleButton:
                 id: img
                 only: self.state == 'down'
