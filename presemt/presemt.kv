@@ -131,6 +131,7 @@
                 callback: fc.partial(root.add_text)
 
         ScrollView:
+            scroll_timeout: 100
             StackLayout:
                 id: stack
                 size_hint_y: None
@@ -295,6 +296,7 @@
                 callback: root.add_slide
 
         ScrollView:
+            scroll_timeout: 100
             StackLayout:
                 size_hint_y: None
                 id: tb_slides

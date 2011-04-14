@@ -72,7 +72,7 @@ class TextStackEntry(Factory.BoxLayout):
         if super(TextStackEntry, self).on_touch_down(touch):
             return True
         pos = self.ctrl.center
-        self.ctrl.create_text(pos=pos, text=self.text)
+        self.ctrl.create_text(touch=touch, pos=pos, text=self.text)
 
 Factory.register('TextStackEntry', cls=TextStackEntry)
 
@@ -184,12 +184,9 @@ class MainScreen(Screen):
     def _create_object(self, cls, touch, pos, **kwargs):
         kwargs.setdefault('rotation', -self.plane.rotation)
         kwargs.setdefault('scale', 1. / self.plane.scale)
-        if touch:
-            pos = self.plane.to_local(*touch.pos)
         obj = cls(touch_follow=touch, **kwargs)
         if pos:
             pos = self.plane.to_local(*pos)
-            print 'pos', pos
             obj.center = pos
         self.plane.add_widget(obj)
 
@@ -259,9 +256,11 @@ class MainScreen(Screen):
             self.create_video(touch, **kwargs)
 
     def create_image(self, touch=None, pos=None, **kwargs):
+        pos = self.center
         self._create_object(ImagePlaneObject, touch, pos, **kwargs)
 
     def create_video(self, touch=None, pos=None, **kwargs):
+        pos = self.center
         self._create_object(VideoPlaneObject, touch, pos, **kwargs)
 
     def get_text_panel(self):
