@@ -3,6 +3,7 @@ from math import sqrt
 from os.path import join, dirname, splitext
 from os import unlink
 from . import Screen
+from document import Document, TextObject, ImageObject, VideoObject
 from kivy.core.window import Window
 from kivy.vector import Vector
 from kivy.uix.scatter import ScatterPlane, Scatter
@@ -140,11 +141,15 @@ class TextPlaneObject(PlaneObject):
 
     text = StringProperty('Hello world')
 
-    font_size = NumericProperty(48)
+    bold = BooleanProperty(False)
 
-    def get_configure(self):
-        from kivy.uix.button import Button
-        return Button(text='Hello World')
+    italic = BooleanProperty(False)
+
+    color = ListProperty([1, 1, 1, 1])
+
+    font_name = StringProperty(None)
+
+    font_size = NumericProperty(48)
 
 
 class ImagePlaneObject(PlaneObject):
@@ -278,6 +283,34 @@ class MainScreen(Screen):
     #
 
     def do_save(self):
+        doc = Document()
+        for obj in self.plane.children:
+            attrs = [ ('pos', obj.pos), ('size', obj.size),
+                ('rotation', obj.rotation), ('scale', obj.scale)]
+            if isinstance(obj, TextPlaneObject):
+                attrs += [(attr, getattr(obj, attr)) for attr in TextObject.__attrs__]
+                doc.create_text(**dict(attrs))
+            elif isinstance(obj, ImagePlaneObject):
+                attrs += [(attr, getattr(obj, attr)) for attr in ImageObject.__attrs__]
+                doc.create_image(**dict(attrs))
+            elif isinstance(obj, VideoPlaneObject):
+                attrs += [(attr, getattr(obj, attr)) for attr in VideoObject.__attrs__]
+                doc.create_video(**dict(attrs))
+
+        for obj in self.tb_slides.children:
+            doc.add_slide(obj.slide_pos, obj.slide_rotation, obj.slide_scale)
+
+        doc.save('output.json')
+
+    #
+    # Objects
+    #
+
+    def remove_object(self, obj):
+        self.plane.remove_widget(obj)
+
+    def configure_object(self, obj):
+        # FIXME TODO
         pass
 
     #
