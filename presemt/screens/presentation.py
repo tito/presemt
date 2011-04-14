@@ -329,6 +329,7 @@ class MainScreen(Screen):
         self._plane_animation = Animation(pos=slide.slide_pos,
                  rotation=slide_rotation,
                  scale=slide.slide_scale, **k)
+        self._plane_animation.bind(on_progress=self.plane.cull_children)
         self._plane_animation.start(self.plane)
 
     def unselect(self):
@@ -433,7 +434,9 @@ class MainPlane(ScatterPlane):
     def on_scene_leave(self, child):
         print 'leaving:', child
 
-    def cull_children(self):
+    def cull_children(self, *args):
+        # *args cause we use cull_children as a callback for animation's
+        # on_progress
         old_children = self.children[:]
         self._really_clear_widgets()
 
