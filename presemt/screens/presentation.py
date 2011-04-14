@@ -14,8 +14,6 @@ from kivy.animation import Animation
 from kivy.core.image import ImageLoader
 from kivy.lang import Builder
 
-default_image = join(dirname(__file__), '..', 'data', 'tests', 'faust_github.jpg')
-
 
 def prefix(exts):
     return ['*.' + t for t in exts]
@@ -148,7 +146,7 @@ class TextPlaneObject(PlaneObject):
 
 class ImagePlaneObject(PlaneObject):
 
-    source = StringProperty(default_image)
+    source = StringProperty(None)
 
 
 class VideoPlaneObject(PlaneObject):
@@ -325,7 +323,7 @@ class MainPlane(ScatterPlane):
         gs = self.grid_spacing
         gc = self.grid_count * gs
         with self.canvas:
-            Color(.9, .9, .9, .9)
+            Color(.9, .9, .9, .2)
             for x in xrange(-gc, gc, gs):
                 Line(points=(x, -gc, x, gc))
                 Line(points=(-gc, x, gc, x))
