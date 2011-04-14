@@ -21,12 +21,13 @@
             rgba: (1, 1, 0, .4) if self.selected else (0, 1, 0, .4)
         Rectangle:
             size: self.size
+            pos: -self.width / 2., -self.height / 2.
 
 <TextPlaneObject>:
     size: label.size
     Label:
         id: label
-        pos: self.pos
+        pos: -self.width / 2., -self.height / 2.
         size: self.texture_size
         text: root.text
         font_size: root.font_size
@@ -36,13 +37,19 @@
     on_size: root.scale = min(1, 1. / (max(1, self.width, self.height) / (640. / self.ctrl.plane.scale)))
     Image:
         id: image
+        pos: -self.width / 2., -self.height / 2.
         size: self.texture_size
         source: root.source
 
 <VideoPlaneObject>:
+    size: video.size
+    on_size: root.scale = min(1, 1. / (max(1, self.width, self.height) / (640. / self.ctrl.plane.scale)))
     Video:
-        play: True
+        id: video
+        pos: -self.width / 2., -self.height / 2.
+        size: self.texture_size
         source: root.source
+        play: True
 
 #
 # Panels
@@ -293,7 +300,7 @@
             height: 80
             ToolbarButton:
                 image: 'add'
-                callback: root.add_slide
+                callback: root.create_slide
 
         ScrollView:
             scroll_timeout: 100

@@ -82,13 +82,24 @@ class Document(object):
         self.infos.version = 1
         self.infos.time_creation = time()
         self.infos.time_modification = time()
-        self.infos.size = (100, 100)
+        self.infos.root_size = kwargs.get('size', (100, 100))
+        self.infos.root_pos = kwargs.get('pos', (0, 0))
+        self.infos.root_scale = kwargs.get('scale', 0.)
+        self.infos.root_rotation = kwargs.get('rotation', 0.)
         self._objects = []
         self._slides = []
 
     @staticmethod
     def register(name, cls):
         Document.available_objects[name] = cls
+
+    @property
+    def objects(self):
+        return (QueryDict(x) for x in self._objects)
+
+    @property
+    def slides(self):
+        return (QueryDict(x) for x in self._slides)
 
     def load(self, filename):
         with open(filename, 'r') as fd:

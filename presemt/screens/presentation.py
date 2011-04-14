@@ -72,8 +72,7 @@ class TextStackEntry(Factory.BoxLayout):
     def on_touch_down(self, touch):
         if super(TextStackEntry, self).on_touch_down(touch):
             return True
-        pos = self.ctrl.center
-        self.ctrl.create_text(touch=touch, pos=pos, text=self.text)
+        self.ctrl.create_text(touch=touch, text=self.text)
 
 Factory.register('TextStackEntry', cls=TextStackEntry)
 
@@ -95,7 +94,7 @@ class TextPanel(Panel):
             return
         label = TextStackEntry(text=text, ctrl=self.ctrl, panel=self)
         self.stack.add_widget(label)
-        self.ctrl.create_text(pos=self.ctrl.center, text=text)
+        self.ctrl.create_text(text=text)
 
 
 class LocalFilePanel(Panel):
@@ -121,6 +120,12 @@ class PlaneObject(Scatter):
             touch.ud.scatter_follow = self
             touch.grab(self)
 
+    def collide_point(self, x, y):
+        x, y = self.to_local(x, y)
+        w2 = self.width / 2.
+        h2 = self.height / 2.
+        return -w2 <= x <= w2 and -h2 <= y <= h2
+
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             if touch.is_double_tap:
@@ -133,7 +138,7 @@ class PlaneObject(Scatter):
     def on_touch_move(self, touch):
         if touch.grab_current is self:
             if 'scatter_follow' in touch.ud:
-                self.center = touch.pos
+                self.pos = touch.pos
         return super(PlaneObject, self).on_touch_move(touch)
 
 
@@ -187,13 +192,18 @@ class MainScreen(Screen):
         self._plane_animation = None
         super(MainScreen, self).__init__(**kwargs)
 
-    def _create_object(self, cls, touch, pos, **kwargs):
+    def _create_object(self, cls, touch, **kwargs):
         kwargs.setdefault('rotation', -self.plane.rotation)
         kwargs.setdefault('scale', 1. / self.plane.scale)
         obj = cls(touch_follow=touch, ctrl=self, **kwargs)
-        if pos:
-            pos = self.plane.to_local(*pos)
-            obj.center = pos
+        if 'size' in kwargs:
+            obj.size = kwargs.get('size')
+        if 'rotation' in kwargs:
+            obj.rotation = kwargs.get('rotation')
+        if 'pos' in kwargs:
+            obj.pos = kwargs.get('pos')
+        else:
+            obj.pos = self.plane.to_local(*self.center)
         self.plane.add_widget(obj)
 
     def update_select(self):
@@ -219,8 +229,8 @@ class MainScreen(Screen):
         for child in self.plane.children:
             child.selected = False
 
-    def create_text(self, touch=None, pos=None, **kwargs):
-        self._create_object(TextPlaneObject, touch, pos, **kwargs)
+    def create_text(self, touch=None, **kwargs):
+        self._create_object(TextPlaneObject, touch, **kwargs)
 
     def from_localfile(self, touch, **kwargs):
         source = kwargs['source']
@@ -230,13 +240,11 @@ class MainScreen(Screen):
         elif ext in SUPPORTED_VID:
             self.create_video(touch, **kwargs)
 
-    def create_image(self, touch=None, pos=None, **kwargs):
-        pos = self.center
-        self._create_object(ImagePlaneObject, touch, pos, **kwargs)
+    def create_image(self, touch=None, **kwargs):
+        self._create_object(ImagePlaneObject, touch, **kwargs)
 
-    def create_video(self, touch=None, pos=None, **kwargs):
-        pos = self.center
-        self._create_object(VideoPlaneObject, touch, pos, **kwargs)
+    def create_video(self, touch=None, **kwargs):
+        self._create_object(VideoPlaneObject, touch, **kwargs)
 
     def get_text_panel(self):
         if not self._panel_text:
@@ -283,8 +291,9 @@ class MainScreen(Screen):
     #
 
     def do_save(self):
-        doc = Document()
-        for obj in self.plane.children:
+        doc = Document(size=self.size, pos=self.plane.pos,
+                       scale=self.plane.scale, rotation=self.plane.rotation)
+        for obj in reversed(self.plane.all_children):
             attrs = [ ('pos', obj.pos), ('size', obj.size),
                 ('rotation', obj.rotation), ('scale', obj.scale)]
             if isinstance(obj, TextPlaneObject):
@@ -297,10 +306,33 @@ class MainScreen(Screen):
                 attrs += [(attr, getattr(obj, attr)) for attr in VideoObject.__attrs__]
                 doc.create_video(**dict(attrs))
 
-        for obj in self.tb_slides.children:
+        for obj in reversed(self.tb_slides.children):
             doc.add_slide(obj.slide_pos, obj.slide_rotation, obj.slide_scale)
 
         doc.save('output.json')
+
+    def do_load(self, filename):
+        doc = Document()
+        doc.load(filename)
+        self.plane.size = doc.infos.root_size
+        self.plane.scale = doc.infos.root_scale
+        self.plane.rotation = doc.infos.root_rotation
+        self.plane.pos = doc.infos.root_pos
+        for obj in doc.objects:
+            attrs = [ ('pos', obj.pos), ('size', obj.size),
+                ('rotation', obj.rotation), ('scale', obj.scale)]
+            if obj.dtype == 'text':
+                attrs += [(attr, obj[attr]) for attr in TextObject.__attrs__]
+                self.create_text(**dict(attrs))
+            elif obj.dtype == 'image':
+                attrs += [(attr, obj[attr]) for attr in ImageObject.__attrs__]
+                self.create_image(**dict(attrs))
+            elif obj.dtype == 'video':
+                attrs += [(attr, obj[attr]) for attr in VideoObject.__attrs__]
+                self.create_video(**dict(attrs))
+        for obj in doc.slides:
+            self.create_slide(pos=obj.pos, rotation=obj.rotation,
+                              scale=obj.scale)
 
     #
     # Objects
@@ -323,14 +355,17 @@ class MainScreen(Screen):
         self._plane_animation.stop(self.plane)
         self._plane_animation = None
 
-    def add_slide(self):
+    def create_slide(self, pos=None, rotation=None, scale=None):
         plane = self.plane
+        pos = pos or plane.pos
+        scale = scale or plane.scale
+        rotation = rotation or plane.rotation
         fn = mktemp('.jpg')
         Window.screenshot(fn)
         slide = Slide(source=fn, ctrl=self,
-                      slide_pos=plane.pos,
-                      slide_rotation=plane.rotation,
-                      slide_scale=plane.scale)
+                      slide_pos=pos,
+                      slide_rotation=rotation,
+                      slide_scale=scale)
         unlink(fn)
         self.tb_slides.add_widget(slide)
         self.update_slide_index()
@@ -404,18 +439,14 @@ class MainPlane(ScatterPlane):
     grid_count = NumericProperty(1000)
 
     def __init__(self, **kwargs):
+        self._trigger_grid = Clock.create_trigger(self.fill_grid, -1)
+        self._trigger_cull = Clock.create_trigger(self.cull_children, -1)
         super(MainPlane, self).__init__(**kwargs)
-        self.bind(
-            grid_spacing=self._trigger_grid,
-            grid_count=self._trigger_grid)
-        self._trigger_grid()
         self.register_event_type('on_scene_enter')
         self.register_event_type('on_scene_leave')
         self.all_children = []
-
-    def _trigger_grid(self, *largs):
-        Clock.unschedule(self.fill_grid)
-        Clock.schedule_once(self.fill_grid)
+        self._trigger_grid()
+        self._trigger_cull()
 
     def fill_grid(self, *largs):
         self.canvas.clear()
@@ -437,11 +468,11 @@ class MainPlane(ScatterPlane):
         scatterplane viewport. Uses bounding circle check.
         '''
         # Get minimal bounding circle around widget
-        w_win_center = w.to_window(*w.center)
+        w_win_center = w.to_window(*w.pos)
         lwc = self.to_local(*w_win_center)
         # XXX Why does this not work instead of the previous two?
         #lwc = w.to_parent(*w.center)
-        corner = w.to_parent(0, 0)
+        corner = w.to_parent(-w.width / 2., -w.height / 2.)
         r = Vector(*lwc).distance(Vector(*corner))
 
         # Get minimal bounding circle around viewport
@@ -458,8 +489,7 @@ class MainPlane(ScatterPlane):
         return False
 
     def transform_with_touch(self, touch):
-        #import pdb; pdb.set_trace()
-        self.cull_children()
+        self._trigger_cull()
         super(MainPlane, self).transform_with_touch(touch)
 
     def on_scene_enter(self, child):
@@ -488,10 +518,12 @@ class MainPlane(ScatterPlane):
 
         self.all_children.insert(0, child)
         self._really_add_widget(child, front=True)
+        self._trigger_cull()
 
     def remove_widget(self, child):
         self.all_children.remove(child)
         self._really_remove_widget(child)
+        self._trigger_cull()
 
     def clear_widgets(self):
         self.all_children = []
