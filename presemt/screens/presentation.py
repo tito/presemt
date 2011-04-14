@@ -94,6 +94,7 @@ class TextPanel(Panel):
             return
         label = TextStackEntry(text=text, ctrl=self.ctrl, panel=self)
         self.stack.add_widget(label)
+        self.ctrl.create_text(pos=self.ctrl.center, text=text)
 
 
 class LocalFilePanel(Panel):
@@ -110,6 +111,8 @@ class PlaneObject(Scatter):
 
     selected = BooleanProperty(False)
 
+    ctrl = ObjectProperty(None)
+
     def __init__(self, **kwargs):
         super(PlaneObject, self).__init__(**kwargs)
         touch = kwargs.get('touch_follow', None)
@@ -117,15 +120,13 @@ class PlaneObject(Scatter):
             touch.ud.scatter_follow = self
             touch.grab(self)
 
-    def configure(self):
-        pass
-
-    def get_configure(self):
-        pass
-
     def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos) and touch.is_double_tap:
-            self.configure()
+        if self.collide_point(*touch.pos):
+            if touch.is_double_tap:
+                self.ctrl.remove_object(self)
+                return True
+            else:
+                self.ctrl.configure_object(self)
         return super(PlaneObject, self).on_touch_down(touch)
 
     def on_touch_move(self, touch):
@@ -184,7 +185,7 @@ class MainScreen(Screen):
     def _create_object(self, cls, touch, pos, **kwargs):
         kwargs.setdefault('rotation', -self.plane.rotation)
         kwargs.setdefault('scale', 1. / self.plane.scale)
-        obj = cls(touch_follow=touch, **kwargs)
+        obj = cls(touch_follow=touch, ctrl=self, **kwargs)
         if pos:
             pos = self.plane.to_local(*pos)
             obj.center = pos
