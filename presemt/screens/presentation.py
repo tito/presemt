@@ -190,37 +190,6 @@ class MainScreen(Screen):
             obj.center = pos
         self.plane.add_widget(obj)
 
-   # def on_touch_down(self, touch):
-   #     if super(MainScreen, self).on_touch_down(touch):
-   #         return True
-   #     if not self.do_selection:
-   #         self.do_selection = True
-   #         self.selection_points = []
-   #         x, y = self.plane.to_local(*touch.pos)
-   #         self.selection_points.append(x)
-   #         self.selection_points.append(y)
-   #         touch.grab(self)
-   #         return True
-
-   # def on_touch_move(self, touch):
-   #     if super(MainScreen, self).on_touch_move(touch):
-   #         return True
-   #     if touch.grab_current is self and self.do_selection:
-   #         x, y = self.plane.to_local(*touch.pos)
-   #         self.selection_points.append(x)
-   #         self.selection_points.append(y)
-   #         self.update_select()
-
-   # def on_touch_up(self, touch):
-   #     if super(MainScreen, self).on_touch_up(touch):
-   #         return True
-   #     if touch.grab_current is self and self.do_selection:
-   #         touch.ungrab(self)
-   #         self.update_select()
-   #         self.selection_align()
-   #         self.cancel_selection()
-   #         return True
-
     def update_select(self):
         s = self.selection_points
         for child in self.plane.children:
