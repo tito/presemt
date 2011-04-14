@@ -26,10 +26,10 @@ class ButtonBehavior(object):
             on_touch_down=self._button_on_touch_down,
             on_touch_up=self._button_on_touch_up)
 
-    def on_press(self):
+    def on_press(self, touch):
         pass
 
-    def on_release(self):
+    def on_release(self, touch):
         pass
 
     def _button_on_touch_down(self, instance, touch):
@@ -39,7 +39,7 @@ class ButtonBehavior(object):
         touch.grab(self)
         self.is_hover = True
         self.button_touch = touch
-        self.dispatch('on_press')
+        self.dispatch('on_press', touch)
         return self.button_grab
 
     def _button_on_touch_up(self, instance, touch):
@@ -47,7 +47,7 @@ class ButtonBehavior(object):
             return
         touch.ungrab(self)
         self.is_hover = False
-        self.dispatch('on_release')
+        self.dispatch('on_release', touch)
         self.button_touch = None
         return self.button_grab
 

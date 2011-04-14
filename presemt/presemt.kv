@@ -186,14 +186,43 @@
             pos: self.pos
             size: self.size
 
+
+<Slide>:
+    button_grab: True
+    canvas.after:
+        Color:
+            rgba: [0.5411, 0.6862, 0.2352, .1] if root.selected else (0, 0, 0, 0)
+        Rectangle:
+            size: self.norm_image_size
+            pos: self.center_x - self.norm_image_size[0] / 2., self.center_y - self.norm_image_size[1] / 2.
+
+    height: self.norm_image_size[1] + label.height * 2
+
+    Label:
+        id: label
+        text: str(root.index + 1)
+        x: root.x
+        top: root.top
+        font_size: 8
+        size: (root.width, self.texture_size[1] + 5)
+        canvas:
+            Color:
+                rgba: [0.5411, 0.6862, 0.2352, 1] if root.selected else (0, 0, 0, 1)
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
 <MainScreen>:
     plane: plane
     config: config
+    tb_objects: tb_objects
+    tb_slides: tb_slides
 
     MainPlane:
         id: plane
         scale_min: 0.20
         scale_max: 20
+        on_touch_down: root.unselect()
         canvas.after:
             Color:
                 rgba: 1, 0, 0, .5
@@ -211,6 +240,45 @@
         orientation: 'vertical'
         size_hint_x: None
         width: 80
+        canvas:
+            Color:
+                rgba: (.1, .1, .1, .9)
+            Rectangle:
+                size: self.size
+                pos: self.pos
+
+        BoxLayout:
+            id: tb_objects
+            orientation: 'vertical'
+            size_hint_y: None
+
+            ToolbarButton:
+                image: 'text'
+                callback: root.toggle_text_panel
+
+            ToolbarButton:
+                image: 'image'
+                callback: root.toggle_localfile_panel
+
+        Widget:
+
+        BoxLayout:
+            orientation: 'vertical'
+            ToolbarButton:
+                image: 'savefile'
+                callback: root.do_save
+
+            ToolbarButton:
+                image: 'home'
+                callback: root.go_home
+
+
+    # Slides
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_x: None
+        width: 80
+        pos_hint: {'right': 1}
 
         canvas:
             Color:
@@ -219,12 +287,18 @@
                 size: self.size
                 pos: self.pos
 
-        ToolbarButton:
-            image: 'text'
-            callback: root.toggle_text_panel
-        ToolbarButton:
-            image: 'image'
-            callback: root.toggle_localfile_panel
+        BoxLayout:
+            size_hint_y: None
+            height: 80
+            ToolbarButton:
+                image: 'add'
+                callback: root.add_slide
+
+        ScrollView:
+            StackLayout:
+                size_hint_y: None
+                id: tb_slides
+
 
 # Debugging stuff, merge if you want in the MainScreen rule
 <azdpok>:

@@ -1,5 +1,7 @@
+from tempfile import mktemp
 from math import sqrt
 from os.path import join, dirname, splitext
+from os import unlink
 from . import Screen
 from kivy.core.window import Window
 from kivy.vector import Vector
@@ -168,14 +170,16 @@ class MainScreen(Screen):
 
     selection_points = ListProperty([0, 0])
 
+    tb_objects = ObjectProperty(None)
+
+    tb_slides = ObjectProperty(None)
+
     def __init__(self, **kwargs):
         self._panel = None
         self._panel_text = None
         self._panel_localfile = None
+        self._plane_animation = None
         super(MainScreen, self).__init__(**kwargs)
-        # XXX
-        #self.plane.add_widget(ImagePlaneObject())
-        self._create_object(ImagePlaneObject, None, None)
 
     def _create_object(self, cls, touch, pos, **kwargs):
         kwargs.setdefault('rotation', -self.plane.rotation)
@@ -286,13 +290,105 @@ class MainScreen(Screen):
             self.config.add_widget(panel)
             self._panel.open()
 
-
     # used for kv button
     def toggle_text_panel(self):
         self.toggle_panel('text')
 
     def toggle_localfile_panel(self):
         self.toggle_panel('localfile')
+
+    #
+    # Navigation
+    #
+
+    def go_home(self):
+        self.app.show('project.SelectorScreen')
+
+    #
+    # Save/Load
+    #
+
+    def do_save(self):
+        pass
+
+    #
+    # Slides
+    #
+
+    def reset_animation(self):
+        if not self._plane_animation:
+            return
+        self._plane_animation.stop(self.plane)
+        self._plane_animation = None
+
+    def add_slide(self):
+        plane = self.plane
+        fn = mktemp('.jpg')
+        Window.screenshot(fn)
+        slide = Slide(source=fn, ctrl=self,
+                      slide_pos=plane.pos,
+                      slide_rotation=plane.rotation,
+                      slide_scale=plane.scale)
+        unlink(fn)
+        self.tb_slides.add_widget(slide)
+        self.update_slide_index()
+
+    def remove_slide(self, slide):
+        self.unselect_slides()
+        self.tb_slides.remove_widget(slide)
+        self.update_slide_index()
+
+    def select_slide(self, slide):
+        print 'rotation', slide.slide_rotation, self.plane.rotation
+        print 'scale', slide.slide_scale
+        print 'pos', slide.slide_pos
+        k = {'d': .5, 't': 'out_quad'}
+
+        # highlight slide
+        self.unselect()
+        slide.selected = True
+
+        # rotation must be fixed by hand
+        slide_rotation = slide.slide_rotation
+        s = abs(slide_rotation - self.plane.rotation)
+        if s > 180:
+            if slide_rotation > self.plane.rotation:
+                slide_rotation -= 360
+            else:
+                slide_rotation += 360
+
+        # move to the correct position in the place
+        self._plane_animation = Animation(pos=slide.slide_pos,
+                 rotation=slide_rotation,
+                 scale=slide.slide_scale, **k)
+        self._plane_animation.start(self.plane)
+
+    def unselect(self):
+        self.reset_animation()
+        self.unselect_slides()
+
+    def unselect_slides(self):
+        for child in self.tb_slides.children:
+            child.selected = False
+
+    def update_slide_index(self):
+        for idx, slide in enumerate(reversed(self.tb_slides.children)):
+            slide.index = idx
+
+
+class Slide(Factory.ButtonBehavior, Factory.Image):
+    ctrl = ObjectProperty(None)
+    slide_rotation = NumericProperty(0)
+    slide_scale = NumericProperty(1.)
+    slide_pos = ListProperty([0,0])
+    selected = BooleanProperty(False)
+    index = NumericProperty(0)
+    def on_press(self, touch):
+        if touch.is_double_tap:
+            self.ctrl.remove_slide(self)
+        else:
+            self.ctrl.select_slide(self)
+
 
 #
 # Scatter plane with grid
