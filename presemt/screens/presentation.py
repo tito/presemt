@@ -179,6 +179,8 @@ class MainScreen(Screen):
 
     config = ObjectProperty(None)
 
+    capture = ObjectProperty(None)
+
     do_selection = BooleanProperty(False)
 
     selection_points = ListProperty([0, 0])
@@ -309,7 +311,8 @@ class MainScreen(Screen):
                 doc.create_video(**dict(attrs))
 
         for obj in reversed(self.tb_slides.children):
-            doc.add_slide(obj.slide_pos, obj.slide_rotation, obj.slide_scale)
+            doc.add_slide(obj.slide_pos, obj.slide_rotation,
+                          obj.slide_scale, obj.thumb)
 
         doc.save('output.json')
 
@@ -334,7 +337,7 @@ class MainScreen(Screen):
                 self.create_video(**dict(attrs))
         for obj in doc.slides:
             self.create_slide(pos=obj.pos, rotation=obj.rotation,
-                              scale=obj.scale)
+                              scale=obj.scale, thumb=obj.thumb)
 
     #
     # Objects
@@ -357,18 +360,17 @@ class MainScreen(Screen):
         self._plane_animation.stop(self.plane)
         self._plane_animation = None
 
-    def create_slide(self, pos=None, rotation=None, scale=None):
+    def create_slide(self, pos=None, rotation=None, scale=None, thumb=None):
         plane = self.plane
         pos = pos or plane.pos
         scale = scale or plane.scale
         rotation = rotation or plane.rotation
-        fn = mktemp('.jpg')
-        Window.screenshot(fn)
-        slide = Slide(source=fn, ctrl=self,
+
+        slide = Slide(ctrl=self,
                       slide_pos=pos,
                       slide_rotation=rotation,
-                      slide_scale=scale)
-        unlink(fn)
+                      slide_scale=scale,
+                      thumb=thumb)
         self.tb_slides.add_widget(slide)
         self.update_slide_index()
 
@@ -400,6 +402,7 @@ class MainScreen(Screen):
         self._plane_animation = Animation(pos=slide.slide_pos,
                  rotation=slide_rotation,
                  scale=slide.slide_scale, **k)
+        self._plane_animation.bind(on_complete=slide.update_capture)
         self._plane_animation.bind(on_progress=self.plane.cull_children)
         self._plane_animation.start(self.plane)
 
@@ -415,6 +418,21 @@ class MainScreen(Screen):
         for idx, slide in enumerate(reversed(self.tb_slides.children)):
             slide.index = idx
 
+    '''
+    def update_slides_capture(self, *largs):
+        pos = self.plane.pos
+        scale = self.plane.scale
+        rotation = self.plane.rotation
+        for slide in self.tb_slides.children:
+            self.plane.scale = slide.slide_scale
+            self.plane.rotation = slide.slide_rotation
+            self.plane.pos = slide.slide_pos
+            self.plane.canvas.ask_update()
+            slide.update_capture()
+        self.plane.scale = scale
+        self.plane.rotation = rotation
+        self.plane.pos = pos
+    '''
 
 class Slide(Factory.ButtonBehavior, Factory.Image):
     ctrl = ObjectProperty(None)
@@ -428,11 +446,91 @@ class Slide(Factory.ButtonBehavior, Factory.Image):
             self.ctrl.remove_slide(self)
         else:
             self.ctrl.select_slide(self)
+    def __init__(self, **kwargs):
+        self.thumb = kwargs.get('thumb', None)
+        del kwargs['thumb']
+        self.ctrl = kwargs.get('ctrl')
+        if self.thumb:
+            self.upload_thumb()
+        else:
+            self.update_capture()
+        super(Slide, self).__init__(**kwargs)
+    def update_capture(self, *largs):
+        from kivy.graphics.opengl import glReadPixels, GL_RGBA, GL_UNSIGNED_BYTE
+        from kivy.graphics.texture import Texture
+        fbo = self.ctrl.capture.fbo_thumb
+        fbo.ask_update()
+        fbo.draw()
+        fbo.bind()
+        tmp = glReadPixels(0, 0, fbo.size[0], fbo.size[1], GL_RGBA, GL_UNSIGNED_BYTE)
+        fbo.release()
+        texture = Texture.create(fbo.size, 'rgb', 'ubyte')
+        texture.blit_buffer(tmp, colorfmt='rgba')
+        self.texture = texture
+        self.texture_size = texture.size
+        self.thumb = (fbo.size[0], fbo.size[1], tmp)
+    def upload_thumb(self):
+        from kivy.graphics.texture import Texture
+        w, h, pixels = self.thumb
+        texture = Texture.create((w, h), 'rgba', 'ubyte')
+        texture.blit_buffer(pixels, colorfmt='rgba')
+        self.texture = texture
+        self.texture_size = texture.size
+
 
 
 #
 # Scatter plane with grid
 #
+
+from kivy.graphics import Canvas, Fbo, Rectangle
+
+class FboCapture(FloatLayout):
+    texture = ObjectProperty(None)
+    texture_thumb = ObjectProperty(None)
+    thumb_size = ListProperty([50, 50])
+    def __init__(self, **kwargs):
+        self.canvas = Canvas()
+        with self.canvas:
+            self.fbo = Fbo(size=self.size)
+            self.fbo_thumb = Fbo(size=self.thumb_size)
+        with self.fbo:
+            Color(0, 0, 0)
+            self.fbo_rect = Rectangle(size=self.size)
+        self.texture = self.fbo.texture
+        with self.fbo_thumb:
+            Color(1, 1, 1)
+            self.fbo_thumb_rect = Rectangle(size=self.thumb_size)
+        super(FboCapture, self).__init__(**kwargs)
+    def on_size(self, instance, value):
+        w, h = value
+        ratio = float(w) / h
+        if w > h:
+            w = 160
+            h = w / ratio
+        else:
+            h = 160
+            w = h * ratio
+        w = max(1, w)
+        h = max(1, h)
+        self.thumb_size = int(w), int(h)
+        self.fbo.size = value
+        self.fbo_rect.size = value
+        self.texture = self.fbo.texture
+        self.fbo_thumb_rect.texture = self.fbo.texture
+    def on_thumb_size(self, instance, value):
+        self.fbo_thumb.size = value
+        self.fbo_thumb_rect.size = value
+        self.texture_thumb = self.fbo_thumb.texture
+    def add_widget(self, child):
+        child.parent = self
+        self.children.insert(0, child)
+        self.fbo.add(child.canvas)
+    def remove_widget(self, child):
+        self.children.remove(child)
+        self.fbo.remove(child.canvas)
+
+Factory.register('FboCapture', cls=FboCapture)
 
 class MainPlane(ScatterPlane):
 

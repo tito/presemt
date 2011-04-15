@@ -106,6 +106,9 @@ class Document(object):
             j = json.loads(fd.read())
         self.infos.update(j['document'])
         for slide in j['slides']:
+            thumb = slide['thumb']
+            if thumb is not None:
+                slide['thumb'] = self.decode_thumb(thumb)
             self._slides.append(DocumentSlide(slide))
         for obj in j['objects']:
             inst = Document.available_objects[obj['dtype']](**obj)
@@ -138,11 +141,47 @@ class Document(object):
         self._objects.append(video)
         return video
 
-    def add_slide(self, pos, rotation, scale):
+    def encode_thumb(self, thumb):
+        import pygame
+        import tempfile
+        import os
+        import base64
+
+        w, h, pixels = thumb
+        # convert pixels to png
+        surface = pygame.image.fromstring(pixels, (w, h), 'RGBA', True)
+        fn = tempfile.mktemp('.png')
+        pygame.image.save(surface, fn)
+        # read png
+        with open(fn) as fd:
+            data = fd.read()
+        # delete file
+        os.unlink(fn)
+        # convert to base64
+        data = base64.b64encode(data)
+        return (w, h, 'data:image/png;base64,' + data)
+
+    def decode_thumb(self, thumb):
+        header = 'data:image/png;base64,'
+        w, h, data = thumb
+        if not data.startswith('data:image/png;base64,'):
+            return None
+        data = data[len(header):]
+        import base64
+        import StringIO
+        import pygame
+        data = StringIO.StringIO(base64.b64decode(data))
+        surface = pygame.image.load(data, 'image.png')
+        return (w, h, pygame.image.tostring(surface, 'RGBA'))
+
+    def add_slide(self, pos, rotation, scale, thumb):
+        if thumb is not None:
+            thumb = self.encode_thumb(thumb)
         slide = DocumentSlide()
         slide.pos = pos
         slide.rotation = rotation
         slide.scale = scale
+        slide.thumb = thumb
         self._slides.append(slide)
         return slide
 

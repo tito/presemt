@@ -220,22 +220,36 @@
                 pos: self.pos
                 size: self.size
 
+<FboCapture>:
+    canvas:
+        Color:
+            rgb: 1, 1, 1,
+        Rectangle:
+            pos: self.pos
+            size: self.size
+            texture: self.texture
+
 <MainScreen>:
     plane: plane
     config: config
     tb_objects: tb_objects
     tb_slides: tb_slides
+    capture: capture
 
-    MainPlane:
-        id: plane
-        scale_min: 0.20
-        scale_max: 20
-        on_touch_down: root.unselect()
-        canvas.after:
-            Color:
-                rgba: 1, 0, 0, .5
-            Line:
-                points: root.selection_points
+    FboCapture:
+        id: capture
+
+        MainPlane:
+            id: plane
+            ctrl: root
+            scale_min: 0.20
+            scale_max: 20
+            on_touch_down: root.unselect()
+            canvas.after:
+                Color:
+                    rgba: 1, 0, 0, .5
+                Line:
+                    points: root.selection_points
 
     # Config menu
     FloatLayout:
