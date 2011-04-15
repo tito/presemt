@@ -148,31 +148,31 @@ class Document(object):
         import base64
 
         w, h, pixels = thumb
-        # convert pixels to png
+        # convert pixels to jpeg
         surface = pygame.image.fromstring(pixels, (w, h), 'RGBA', True)
-        fn = tempfile.mktemp('.png')
+        fn = tempfile.mktemp('.jpg')
         pygame.image.save(surface, fn)
-        # read png
+        # read jpeg
         with open(fn) as fd:
             data = fd.read()
         # delete file
         os.unlink(fn)
         # convert to base64
         data = base64.b64encode(data)
-        return (w, h, 'data:image/png;base64,' + data)
+        return (w, h, 'data:image/jpeg;base64,' + data)
 
     def decode_thumb(self, thumb):
-        header = 'data:image/png;base64,'
+        header = 'data:image/jpeg;base64,'
         w, h, data = thumb
-        if not data.startswith('data:image/png;base64,'):
+        if not data.startswith('data:image/jpeg;base64,'):
             return None
         data = data[len(header):]
         import base64
         import StringIO
         import pygame
         data = StringIO.StringIO(base64.b64decode(data))
-        surface = pygame.image.load(data, 'image.png')
-        return (w, h, pygame.image.tostring(surface, 'RGBA'))
+        surface = pygame.image.load(data, 'image.jpg')
+        return (w, h, pygame.image.tostring(surface, 'RGB', True))
 
     def add_slide(self, pos, rotation, scale, thumb):
         if thumb is not None:

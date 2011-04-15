@@ -207,6 +207,7 @@ class MainScreen(Screen):
         self._panel_text = None
         self._panel_localfile = None
         self._plane_animation = None
+        Clock.schedule_interval(self.update_slides_capture, 1)
         super(MainScreen, self).__init__(**kwargs)
 
     def _create_object(self, cls, touch, **kwargs):
@@ -437,7 +438,6 @@ class MainScreen(Screen):
         for idx, slide in enumerate(reversed(self.tb_slides.children)):
             slide.index = idx
 
-    '''
     def update_slides_capture(self, *largs):
         pos = self.plane.pos
         scale = self.plane.scale
@@ -446,12 +446,12 @@ class MainScreen(Screen):
             self.plane.scale = slide.slide_scale
             self.plane.rotation = slide.slide_rotation
             self.plane.pos = slide.slide_pos
-            self.plane.canvas.ask_update()
+            self.plane.cull_children(no_event=True)
             slide.update_capture()
         self.plane.scale = scale
         self.plane.rotation = rotation
         self.plane.pos = pos
-    '''
+        self.plane.cull_children(no_event=True)
 
 class Slide(Factory.ButtonBehavior, Factory.Image):
     ctrl = ObjectProperty(None)
@@ -460,6 +460,7 @@ class Slide(Factory.ButtonBehavior, Factory.Image):
     slide_pos = ListProperty([0,0])
     selected = BooleanProperty(False)
     index = NumericProperty(0)
+    texture = ObjectProperty(None)
     def on_press(self, touch):
         if touch.is_double_tap:
             self.ctrl.remove_slide(self)
@@ -477,13 +478,19 @@ class Slide(Factory.ButtonBehavior, Factory.Image):
     def update_capture(self, *largs):
         from kivy.graphics.opengl import glReadPixels, GL_RGBA, GL_UNSIGNED_BYTE
         from kivy.graphics.texture import Texture
+        fbo = self.ctrl.capture.fbo
+        fbo.ask_update()
+        fbo.draw()
         fbo = self.ctrl.capture.fbo_thumb
         fbo.ask_update()
         fbo.draw()
         fbo.bind()
         tmp = glReadPixels(0, 0, fbo.size[0], fbo.size[1], GL_RGBA, GL_UNSIGNED_BYTE)
         fbo.release()
-        texture = Texture.create(fbo.size, 'rgb', 'ubyte')
+        if not self.texture:
+            self.texture = texture = Texture.create(fbo.size, 'rgb', 'ubyte')
+        else:
+            texture = self.texture
         texture.blit_buffer(tmp, colorfmt='rgba')
         self.texture = texture
         self.texture_size = texture.size
@@ -491,8 +498,8 @@ class Slide(Factory.ButtonBehavior, Factory.Image):
     def upload_thumb(self):
         from kivy.graphics.texture import Texture
         w, h, pixels = self.thumb
-        texture = Texture.create((w, h), 'rgba', 'ubyte')
-        texture.blit_buffer(pixels, colorfmt='rgba')
+        texture = Texture.create((w, h), 'rgb', 'ubyte')
+        texture.blit_buffer(pixels, colorfmt='rgb')
         self.texture = texture
         self.texture_size = texture.size
 
@@ -512,7 +519,7 @@ class FboCapture(FloatLayout):
         self.canvas = Canvas()
         with self.canvas:
             self.fbo = Fbo(size=self.size)
-            self.fbo_thumb = Fbo(size=self.thumb_size)
+        self.fbo_thumb = Fbo(size=self.thumb_size)
         with self.fbo:
             Color(0, 0, 0)
             self.fbo_rect = Rectangle(size=self.size)
@@ -687,7 +694,8 @@ class MainPlane(ScatterPlane):
     def on_scene_leave(self, child):
         print 'leaving:', child
 
-    def cull_children(self, *args):
+    def cull_children(self, *args, **kwargs):
+        no_event = kwargs.get('no_event', False)
         # *args cause we use cull_children as a callback for animation's
         # on_progress
         old_children = self.children[:]
@@ -696,8 +704,10 @@ class MainPlane(ScatterPlane):
         for child in reversed(self.all_children):
             if self.is_visible(child):
                 self._really_add_widget(child)
-                if not child in old_children:
+                if not no_event and not child in old_children:
                     self.dispatch('on_scene_enter', child)
+        if no_event:
+            return
         for child in old_children:
             if child not in self.children:
                 self.dispatch('on_scene_leave', child)
