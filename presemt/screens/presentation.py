@@ -72,7 +72,9 @@ class TextStackEntry(Factory.BoxLayout):
     def on_touch_down(self, touch):
         if super(TextStackEntry, self).on_touch_down(touch):
             return True
-        self.ctrl.create_text(touch=touch, text=self.text)
+        if self.collide_point(*touch.pos):
+            self.ctrl.create_text(touch=touch, text=self.text)
+            return True
 
 Factory.register('TextStackEntry', cls=TextStackEntry)
 
