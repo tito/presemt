@@ -6,6 +6,7 @@ PreseMT - A presentation software
 import kivy
 kivy.require('1.0.5')
 
+from sys import argv
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 
@@ -36,14 +37,16 @@ class PresemtApp(App):
         screen = screens[name]
         self.root.clear_widgets()
         self.root.add_widget(screen)
+        return screen
 
     def build(self):
         self.root = FloatLayout()
         self.show('loading.LoadingScreen')
         # ... do loading here ^^
         #self.show('project.SelectorScreen')
-        self.show('presentation.MainScreen')
-
+        main = self.show('presentation.MainScreen')
+        if len(argv) > 1:
+            main.do_load(argv[1])
 
 if __name__ in ('__main__', '__android__'):
     PresemtApp().run()
