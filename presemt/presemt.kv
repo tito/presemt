@@ -286,6 +286,11 @@
 
         BoxLayout:
             orientation: 'vertical'
+
+            ToolbarButton:
+                image: 'lock'
+                callback: root.toggle_lock
+
             ToolbarButton:
                 image: 'savefile'
                 callback: root.do_save

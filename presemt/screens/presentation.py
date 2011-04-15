@@ -283,6 +283,9 @@ class MainScreen(Screen):
     def toggle_localfile_panel(self):
         self.toggle_panel('localfile')
 
+    def toggle_lock(self):
+        self.plane.children_locked = not self.plane.children_locked
+
     #
     # Navigation
     #
@@ -538,6 +541,8 @@ class MainPlane(ScatterPlane):
 
     grid_count = NumericProperty(1000)
 
+    children_locked = BooleanProperty(False)
+
     def __init__(self, **kwargs):
         self._trigger_grid = Clock.create_trigger(self.fill_grid, -1)
         self._trigger_cull = Clock.create_trigger(self.cull_children, -1)
@@ -557,6 +562,74 @@ class MainPlane(ScatterPlane):
             for x in xrange(-gc, gc, gs):
                 Line(points=(x, -gc, x, gc))
                 Line(points=(-gc, x, gc, x))
+
+
+    #
+    # In order to maneuver more easily with a lot of widgets on the screen, we
+    # want to be able to lock the children. Since we still want to handle the
+    # touch events ourselves as if there were no children, we must overload the
+    # on_touch_* handlers and do almost the same that our parent class does,
+    # except that we only propagate the on_touch_* events to our children if
+    # self.children_locked is False.
+    #
+
+    def on_touch_down(self, touch):
+        x, y = touch.x, touch.y
+
+        if not self.children_locked:
+            # let the child widgets handle the event if they want
+            touch.push()
+            touch.apply_transform_2d(self.to_local)
+            if super(Scatter, self).on_touch_down(touch):
+                touch.pop()
+                return True
+            touch.pop()
+
+        # grab the touch so we get all it later move events for sure
+        touch.grab(self)
+        self._touches.append(touch)
+        self._last_touch_pos[touch] = touch.pos
+
+        return True
+
+    def on_touch_move(self, touch):
+        x, y = touch.x, touch.y
+        if not self.children_locked:
+            # let the child widgets handle the event if they want
+            if not touch.grab_current == self:
+                touch.push()
+                touch.apply_transform_2d(self.to_local)
+                if super(Scatter, self).on_touch_move(touch):
+                    touch.pop()
+                    return True
+                touch.pop()
+
+        # rotate/scale/translate
+        if touch in self._touches and touch.grab_current == self:
+            self.transform_with_touch(touch)
+            self._last_touch_pos[touch] = touch.pos
+
+        return True
+
+    def on_touch_up(self, touch):
+        x, y = touch.x, touch.y
+        if not self.children_locked:
+            # if the touch isnt on the widget we do nothing, just try children
+            if not touch.grab_current == self:
+                touch.push()
+                touch.apply_transform_2d(self.to_local)
+                if super(Scatter, self).on_touch_up(touch):
+                    touch.pop()
+                    return True
+                touch.pop()
+
+        # remove it from our saved touches
+        if touch in self._touches and touch.grab_state:
+            touch.ungrab(self)
+            del self._last_touch_pos[touch]
+            self._touches.remove(touch)
+
+        return True
 
     #
     # Culling below
