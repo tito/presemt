@@ -179,18 +179,28 @@
                 group: 'filetype'
 
 
-[ToolbarButton@ButtonBehavior+Image]:
+[ToolbarButton@ToggleButton]:
     source: 'data/%s.png' % ctx.image
-    size: self.texture_size
+    size: image.texture_size
     size_hint: None, None
-    on_press: ctx.callback()
-    button_grab: True
+    on_press: ctx.callback(); self._do_press() if ctx.no_toggle else None
+    #button_grab: True
+    group: ctx.group if 'group' in ctx else None
+    no_toggle: ctx.no_toggle if 'no_toggle' in ctx else False
+    canvas:
+        Clear
     canvas.before:
         Color:
-            rgba: 1, 1, 1, 0.5 if self.is_hover else 0
+            rgba: 1, 1, 1, 0.5 if self.state == 'down' else 0
         Rectangle:
             pos: self.pos
             size: self.size
+    Image:
+        id: image
+        source: root.source
+        size_hint: (None, None)
+        size: root.size
+        pos: root.pos
 
 
 <Slide>:
@@ -273,12 +283,16 @@
             size_hint_y: None
 
             ToolbarButton:
+                group: 'planeobject_adder'
                 image: 'text'
                 callback: root.toggle_text_panel
+                no_toggle: False
 
             ToolbarButton:
+                group: 'planeobject_adder'
                 image: 'image'
                 callback: root.toggle_localfile_panel
+                no_toggle: False
 
         Widget:
 
@@ -288,14 +302,17 @@
             ToolbarButton:
                 image: 'lock'
                 callback: root.toggle_lock
+                no_toggle: False
 
             ToolbarButton:
                 image: 'savefile'
                 callback: root.do_save
+                no_toggle: True
 
             ToolbarButton:
                 image: 'home'
                 callback: root.go_home
+                no_toggle: True
 
 
     # Slides
@@ -318,6 +335,7 @@
             ToolbarButton:
                 image: 'add'
                 callback: root.create_slide
+                no_toggle: True
 
         ScrollView:
             scroll_timeout: 100
