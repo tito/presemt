@@ -34,7 +34,6 @@
 
 <ImagePlaneObject>:
     size: image.size
-    on_size: root.scale = min(1, 1. / (max(1, self.width, self.height) / (640. / self.ctrl.plane.scale)))
     Image:
         id: image
         pos: -self.width / 2., -self.height / 2.
@@ -43,7 +42,6 @@
 
 <VideoPlaneObject>:
     size: video.size
-    on_size: root.scale = min(1, 1. / (max(1, self.width, self.height) / (640. / self.ctrl.plane.scale)))
     Video:
         id: video
         pos: -self.width / 2., -self.height / 2.

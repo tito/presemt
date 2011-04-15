@@ -159,14 +159,27 @@ class TextPlaneObject(PlaneObject):
     font_size = NumericProperty(48)
 
 
-class ImagePlaneObject(PlaneObject):
+class MediaPlaneObject(PlaneObject):
 
     source = StringProperty(None)
 
+    do_adjust = BooleanProperty(False)
 
-class VideoPlaneObject(PlaneObject):
+    def __init__(self, **kwargs):
+        super(MediaPlaneObject, self).__init__(**kwargs)
 
-    source = StringProperty(None)
+    def on_size(self, instance, value):
+        if not self.do_adjust:
+            return
+        self.scale = min(1, 1. / (max(1, self.width, self.height) / (640. / self.ctrl.plane.scale)))
+
+
+
+class ImagePlaneObject(MediaPlaneObject):
+    pass
+
+class VideoPlaneObject(MediaPlaneObject):
+    pass
 
 
 #
@@ -202,6 +215,8 @@ class MainScreen(Screen):
         obj = cls(touch_follow=touch, ctrl=self, **kwargs)
         if 'size' in kwargs:
             obj.size = kwargs.get('size')
+        if 'scale' in kwargs:
+            obj.rotation = kwargs.get('scale')
         if 'rotation' in kwargs:
             obj.rotation = kwargs.get('rotation')
         if 'pos' in kwargs:
@@ -237,6 +252,7 @@ class MainScreen(Screen):
         self._create_object(TextPlaneObject, touch, **kwargs)
 
     def from_localfile(self, touch, **kwargs):
+        kwargs.setdefault('do_adjust', True)
         source = kwargs['source']
         ext = splitext(source)[-1][1:]
         if ext in SUPPORTED_IMG:
