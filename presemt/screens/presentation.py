@@ -460,27 +460,47 @@ class Slide(Factory.ButtonBehavior, Factory.Image):
     slide_pos = ListProperty([0,0])
     selected = BooleanProperty(False)
     index = NumericProperty(0)
-    texture = ObjectProperty(None)
-    def on_press(self, touch):
-        if touch.is_double_tap:
-            self.ctrl.remove_slide(self)
-        else:
-            self.ctrl.select_slide(self)
+
     def __init__(self, **kwargs):
+        # get raw rgb thumb is available
         self.thumb = kwargs.get('thumb', None)
         del kwargs['thumb']
+        # extract controler now, we need it.
         self.ctrl = kwargs.get('ctrl')
+        # create fbo for tiny texture
+        self.fbo = Fbo(size=(160, 120))
+        with self.fbo:
+            Color(1, 1, 1)
+            Rectangle(size=self.fbo.size)
+            self.fborect = Rectangle(size=self.fbo.size)
         if self.thumb:
             self.upload_thumb()
         else:
             self.update_capture()
         super(Slide, self).__init__(**kwargs)
+
+    def on_press(self, touch):
+        if touch.is_double_tap:
+            self.ctrl.remove_slide(self)
+        else:
+            self.ctrl.select_slide(self)
+
     def update_capture(self, *largs):
-        from kivy.graphics.opengl import glReadPixels, GL_RGBA, GL_UNSIGNED_BYTE
-        from kivy.graphics.texture import Texture
+        # update main fbo
         fbo = self.ctrl.capture.fbo
         fbo.ask_update()
         fbo.draw()
+
+        # update our tiny fbo
+        self.fborect.texture = fbo.texture
+        self.fbo.ask_update()
+        self.fbo.draw()
+
+        # then bind the texture to our texture image
+        self.texture = self.fbo.texture
+        self.texture_size = self.texture.size
+
+        '''
         fbo = self.ctrl.capture.fbo_thumb
         fbo.ask_update()
         fbo.draw()
@@ -495,7 +515,10 @@ class Slide(Factory.ButtonBehavior, Factory.Image):
         self.texture = texture
         self.texture_size = texture.size
         self.thumb = (fbo.size[0], fbo.size[1], tmp)
+        '''
+
     def upload_thumb(self):
+        return
         from kivy.graphics.texture import Texture
         w, h, pixels = self.thumb
         texture = Texture.create((w, h), 'rgb', 'ubyte')
@@ -577,14 +600,20 @@ class MainPlane(ScatterPlane):
         self._trigger_cull()
 
     def fill_grid(self, *largs):
+        # FIXME grid disable cause every line is in a different VBO
+        # That's cause lot of lags on many devices. Activate background
+        # grid as soon as we will be able to do one call-one draw
+        return
         self.canvas.clear()
         gs = self.grid_spacing
         gc = self.grid_count * gs
+        count = 0
         with self.canvas:
             Color(.9, .9, .9, .2)
             for x in xrange(-gc, gc, gs):
                 Line(points=(x, -gc, x, gc))
                 Line(points=(-gc, x, gc, x))
+                count += 2
 
 
     #
