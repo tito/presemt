@@ -59,9 +59,13 @@ def point_inside_polygon(x,y,poly):
 
 class Panel(FloatLayout):
     ctrl = ObjectProperty(None)
-    def open(self):
+    def __init__(self, **kwargs):
+        self.register_event_type('on_open')
+        self.register_event_type('on_close')
+        super(Panel, self).__init__(**kwargs)
+    def on_open(self):
         pass
-    def close(self):
+    def on_close(self):
         pass
 
 
@@ -282,7 +286,7 @@ class MainScreen(Screen):
         if name:
             panel = getattr(self, 'get_%s_panel' % name)()
         if self._panel:
-            self._panel.close()
+            self._panel.dispatch('on_close')
             self.config.remove_widget(self._panel)
             same = self._panel is panel
             self._panel = None
@@ -291,7 +295,7 @@ class MainScreen(Screen):
         if panel:
             self._panel = panel
             self.config.add_widget(panel)
-            self._panel.open()
+            self._panel.dispatch('on_open')
 
     # used for kv button
     def toggle_text_panel(self):
