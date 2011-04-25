@@ -241,6 +241,7 @@
 <MainScreen>:
     plane: plane
     config: config
+    config_container: config_container
     tb_objects: tb_objects
     tb_slides: tb_slides
     capture: capture
@@ -261,10 +262,14 @@
                     points: root.selection_points
 
     # Config menu
-    FloatLayout:
+    StencilView:
+        id: config_container
         size_hint_x: None
         x: 30
-        id: config
+        FloatLayout:
+            height: root.height
+            x: 30
+            id: config
 
     # Toolbar
     BoxLayout:

@@ -16,6 +16,7 @@ from kivy.properties import NumericProperty, ObjectProperty, StringProperty, \
 from kivy.animation import Animation
 from kivy.core.image import ImageLoader
 from kivy.lang import Builder
+from functools import partial
 
 
 def prefix(exts):
@@ -211,7 +212,8 @@ class MainScreen(Screen):
         self._panel_text = None
         self._panel_localfile = None
         self._plane_animation = None
-        Clock.schedule_interval(self.update_slides_capture, 1)
+        self.trigger_slides = Clock.create_trigger(
+            self.update_slides_capture, 1)
         super(MainScreen, self).__init__(**kwargs)
 
     def _create_object(self, cls, touch, **kwargs):
@@ -286,16 +288,27 @@ class MainScreen(Screen):
         if name:
             panel = getattr(self, 'get_%s_panel' % name)()
         if self._panel:
+            same = self._panel is panel
+            if same:
+                panel = None
+            anim = Animation(width=0, d=.3, t='out_cubic')
+            anim.bind(on_complete=partial(self._anim_show_panel, panel))
+            anim.start(self.config_container)
+            return
+        if panel:
+            self._anim_show_panel(panel)
+
+    def _anim_show_panel(self, panel, *largs):
+        print '_anim_show_panel', self._panel, panel
+        if self._panel:
             self._panel.dispatch('on_close')
             self.config.remove_widget(self._panel)
-            same = self._panel is panel
-            self._panel = None
-            if same:
-                return
-        if panel:
-            self._panel = panel
-            self.config.add_widget(panel)
+        self._panel = panel
+        if self._panel:
+            self.config.add_widget(self._panel)
             self._panel.dispatch('on_open')
+            anim = Animation(width=350, d=.3, t='out_cubic')
+            anim.start(self.config_container)
 
     # used for kv button
     def toggle_text_panel(self):
@@ -385,6 +398,7 @@ class MainScreen(Screen):
         self._plane_animation = None
 
     def create_slide(self, pos=None, rotation=None, scale=None, thumb=None):
+        self.trigger_slides()
         plane = self.plane
         pos = pos or plane.pos
         scale = scale or plane.scale
@@ -395,7 +409,7 @@ class MainScreen(Screen):
                       slide_rotation=rotation,
                       slide_scale=scale,
                       thumb=thumb)
-        self.tb_slides.add_widget(slide)
+        self.tb_slides.add_widget(slide, -1)
         self.update_slide_index()
 
     def remove_slide(self, slide):
@@ -404,6 +418,7 @@ class MainScreen(Screen):
         self.update_slide_index()
 
     def select_slide(self, slide):
+        self.trigger_slides()
         print 'rotation', slide.slide_rotation, self.plane.rotation
         print 'scale', slide.slide_scale
         print 'pos', slide.slide_pos
