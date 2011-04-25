@@ -1,6 +1,14 @@
 #:kivy 1.0
 #:import fc functools
 
+<Screen>:
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            source: 'data/images/background.jpg'
+            size: self.size
+
 <LoadingScreen>:
     AnchorLayout:
         Label:
@@ -18,7 +26,7 @@
     size_hint: None, None
     canvas:
         Color:
-            rgba: (1, 1, 0, .4) if self.selected else (0, 1, 0, .4)
+            rgba: ((1, 1, 0, .4) if self.selected else (0, 1, 0, .4)) if root.ctrl.is_edit else (0, 0, 0, 0)
         Rectangle:
             size: self.size
             pos: -self.width / 2., -self.height / 2.
@@ -69,7 +77,7 @@
     x: 80
     canvas:
         Color:
-            rgba: (0.2, .2, .2, .8)
+            rgba: (.16, .18, .19, .9)
         Rectangle:
             pos: self.pos
             size: self.size
@@ -244,10 +252,19 @@
     config_container: config_container
     tb_objects: tb_objects
     tb_slides: tb_slides
+    container_edit: (container_objects, container_slides, config_container)
+    container_publish: ()
     capture: capture
 
     FboCapture:
         id: capture
+        Widget:
+            canvas:
+                Color:
+                    rgb: 1, 1, 1
+                Rectangle:
+                    source: 'data/images/background.jpg'
+                    size: self.size
 
         MainPlane:
             id: plane
@@ -273,12 +290,13 @@
 
     # Toolbar
     BoxLayout:
+        id: container_objects
         orientation: 'vertical'
         size_hint_x: None
         width: 80
         canvas:
             Color:
-                rgba: (.1, .1, .1, .9)
+                rgba: (.12, .14, .15, .9)
             Rectangle:
                 size: self.size
                 pos: self.pos
@@ -306,9 +324,9 @@
             orientation: 'vertical'
 
             ToolbarButton:
-                image: 'lock'
-                callback: root.toggle_lock
-                no_toggle: False
+                image: 'publish'
+                callback: root.do_publish
+                no_toggle: True
 
             ToolbarButton:
                 image: 'savefile'
@@ -316,13 +334,19 @@
                 no_toggle: True
 
             ToolbarButton:
+                image: 'lock'
+                callback: root.toggle_lock
+                no_toggle: False
+
+            ToolbarButton:
                 image: 'home'
-                callback: root.go_home
+                callback: root.ask_quit
                 no_toggle: True
 
 
     # Slides
     BoxLayout:
+        id: container_slides
         orientation: 'vertical'
         size_hint_x: None
         width: 80
@@ -330,7 +354,7 @@
 
         canvas:
             Color:
-                rgba: (.1, .1, .1, .9)
+                rgba: (.12, .14, .15, .9)
             Rectangle:
                 size: self.size
                 pos: self.pos
@@ -350,50 +374,25 @@
                 id: tb_slides
 
 
-# Debugging stuff, merge if you want in the MainScreen rule
-<azdpok>:
+<ModalQuit>:
+    canvas:
+        Color:
+            rgba: 0, 0, 0, self.alpha * 0.9
+        Rectangle:
+            pos: self.pos
+            size: self.size
     BoxLayout:
-        orientation: 'vertical'
+        spacing: 20
+        size: 250, 50
         size_hint: None, None
-        size: 250, 30
-        canvas:
-            Color:
-                rgba: (.5, .5, .5, .1)
-            Rectangle:
-                size: self.size
-                pos: self.pos
-        pos_hint: {'right': 1, 'y': 0}
+        center_y: root.top - root.center_y * root.alpha
+        center_x: root.center_x
 
-        BoxLayout:
-            Label:
-                text: 'Position'
-            Label:
-                size_hint_y: None
-                height: self.texture_size[1] + 10
-                text: '%3.2f %3.2f' % plane.pos
-        BoxLayout:
-            Label:
-                text: 'Scale'
-            Label:
-                size_hint_y: None
-                height: self.texture_size[1] + 10
-                text: '%3.2f' % plane.scale
-        BoxLayout:
-            Label:
-                text: 'Rotation'
-            Label:
-                size_hint_y: None
-                height: self.texture_size[1] + 10
-                text: '%3.2f' % plane.rotation
+        Button:
+            text: 'Cancel'
+            on_press: root.app.leave_quit()
 
-        BoxLayout:
-            Label:
-                text: 'Grid Spacing'
-            Slider:
-                size_hint_y: None
-                height: 40
-                on_value: plane.grid_spacing = int(args[1])
-                value: plane.grid_spacing
-                min: 10
-                max: 100
+        Button:
+            text: 'Save & Quit'
+            on_press: root.app.do_save(); root.app.ask_quit(force=True)
 

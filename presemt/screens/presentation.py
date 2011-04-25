@@ -1,7 +1,4 @@
-from tempfile import mktemp
-from math import sqrt
-from os.path import join, dirname, splitext
-from os import unlink
+from os.path import splitext
 from . import Screen
 from document import Document, TextObject, ImageObject, VideoObject
 from kivy.core.window import Window
@@ -15,7 +12,7 @@ from kivy.properties import NumericProperty, ObjectProperty, StringProperty, \
         BooleanProperty, ListProperty
 from kivy.animation import Animation
 from kivy.core.image import ImageLoader
-from kivy.lang import Builder
+from kivy.graphics.opengl import glReadPixels, GL_RGBA, GL_UNSIGNED_BYTE
 from functools import partial
 
 
@@ -161,7 +158,7 @@ class TextPlaneObject(PlaneObject):
 
     font_name = StringProperty(None)
 
-    font_size = NumericProperty(48)
+    font_size = NumericProperty(96)
 
 
 class MediaPlaneObject(PlaneObject):
@@ -186,12 +183,26 @@ class ImagePlaneObject(MediaPlaneObject):
 class VideoPlaneObject(MediaPlaneObject):
     pass
 
+class ModalQuit(FloatLayout):
+    alpha = NumericProperty(0.)
+    app = ObjectProperty(None)
+    def on_touch_down(self, touch):
+        super(ModalQuit, self).on_touch_down(touch)
+        return True
+Factory.register('ModalQuit', cls=ModalQuit)
+
 
 #
 # Main screen, act as a controler for everybody
 #
 
 class MainScreen(Screen):
+
+    modalquit = ObjectProperty(None, allownone=True)
+
+    is_edit = BooleanProperty(False)
+
+    is_dirty = BooleanProperty(False)
 
     plane = ObjectProperty(None)
 
@@ -208,6 +219,7 @@ class MainScreen(Screen):
     tb_slides = ObjectProperty(None)
 
     def __init__(self, **kwargs):
+        self._initial_load = True
         self._panel = None
         self._panel_text = None
         self._panel_localfile = None
@@ -216,7 +228,67 @@ class MainScreen(Screen):
             self.update_slides_capture, 1)
         super(MainScreen, self).__init__(**kwargs)
 
+    def on_parent(self, instance, value):
+        if value is not None:
+            Window.bind(on_keyboard=self.on_window_keyboard)
+        else:
+            Window.unbind(on_keyboard=self.on_window_keyboard)
+
+    def on_window_keyboard(self, window, code, *largs):
+        # edit mode
+        if self.is_edit:
+            if code == 27:
+                if self._panel:
+                    self.toggle_panel()
+                else:
+                    self.ask_quit()
+                return True
+
+        # publish mode
+        else:
+            # keyboard shortcut for publish mode
+            slide = self.get_selected_slide()
+            if not slide:
+                return
+            # left pad, previous page
+            if code in (276, 280):
+                slide = self.get_slide_by_index(slide.index - 1)
+                self.select_slide(slide)
+            # right pad, next page
+            elif code in (275, 281):
+                slide = self.get_slide_by_index(slide.index + 1)
+                self.select_slide(slide)
+            # space bar, focus current page
+            elif code == 32:
+                self.select_slide(slide)
+            # back to edit mode
+            elif code == 101:
+                self.do_edit()
+            # escape
+            elif code == 27:
+                self.ask_quit()
+            else:
+                return
+            return True
+
+    def leave_quit(self):
+        self.remove_widget(self.modalquit)
+        self.modalquit = None
+
+    def ask_quit(self, force=False):
+        if force is True or not self.is_dirty:
+            self.app.show_start()
+            return
+        if self.is_dirty:
+            if self.modalquit:
+                self.leave_quit()
+            else:
+                self.modalquit = modalquit = ModalQuit(app=self)
+                self.add_widget(modalquit)
+                Animation(alpha=1, d=.5, t='out_cubic').start(modalquit)
+
     def _create_object(self, cls, touch, **kwargs):
+        self.is_dirty = True
         kwargs.setdefault('rotation', -self.plane.rotation)
         kwargs.setdefault('scale', 1. / self.plane.scale)
         obj = cls(touch_follow=touch, ctrl=self, **kwargs)
@@ -299,7 +371,6 @@ class MainScreen(Screen):
             self._anim_show_panel(panel)
 
     def _anim_show_panel(self, panel, *largs):
-        print '_anim_show_panel', self._panel, panel
         if self._panel:
             self._panel.dispatch('on_close')
             self.config.remove_widget(self._panel)
@@ -319,13 +390,6 @@ class MainScreen(Screen):
 
     def toggle_lock(self):
         self.plane.children_locked = not self.plane.children_locked
-
-    #
-    # Navigation
-    #
-
-    def go_home(self):
-        self.app.show('project.SelectorScreen')
 
     #
     # Save/Load
@@ -375,12 +439,52 @@ class MainScreen(Screen):
         for obj in doc.slides:
             self.create_slide(pos=obj.pos, rotation=obj.rotation,
                               scale=obj.scale, thumb=obj.thumb)
+        self.is_dirty = False
+
+    #
+    # Presentation
+    #
+    def _do_initial_load(self):
+        for widget in self.container_edit:
+            widget.old_parent = widget.parent
+            widget.parent.remove_widget(widget)
+        for widget in self.container_publish:
+            widget.old_parent = widget.parent
+            widget.parent.remove_widget(widget)
+        self._initial_load = False
+
+    def do_publish(self):
+        if self._initial_load:
+            self._do_initial_load()
+        self.plane.children_locked = True
+        for widget in self.container_edit:
+            if not widget.parent:
+                continue
+            widget.old_parent = widget.parent
+            widget.parent.remove_widget(widget)
+        for widget in self.container_publish:
+            widget.old_parent.add_widget(widget)
+        self.is_edit = False
+
+    def do_edit(self):
+        if self._initial_load:
+            self._do_initial_load()
+        self.plane.children_locked = False
+        for widget in self.container_publish:
+            if not widget.parent:
+                continue
+            widget.old_parent = widget.parent
+            widget.parent.remove_widget(widget)
+        for widget in self.container_edit:
+            widget.old_parent.add_widget(widget)
+        self.is_edit = True
 
     #
     # Objects
     #
 
     def remove_object(self, obj):
+        self.is_dirty = True
         self.plane.remove_widget(obj)
 
     def configure_object(self, obj):
@@ -398,6 +502,7 @@ class MainScreen(Screen):
         self._plane_animation = None
 
     def create_slide(self, pos=None, rotation=None, scale=None, thumb=None):
+        self.is_dirty = True
         self.trigger_slides()
         plane = self.plane
         pos = pos or plane.pos
@@ -409,20 +514,19 @@ class MainScreen(Screen):
                       slide_rotation=rotation,
                       slide_scale=scale,
                       thumb=thumb)
-        self.tb_slides.add_widget(slide, -1)
+        self.tb_slides.add_widget(slide)
         self.update_slide_index()
 
     def remove_slide(self, slide):
+        self.is_dirty = True
         self.unselect_slides()
         self.tb_slides.remove_widget(slide)
         self.update_slide_index()
 
     def select_slide(self, slide):
+        self.is_dirty = True
         self.trigger_slides()
-        print 'rotation', slide.slide_rotation, self.plane.rotation
-        print 'scale', slide.slide_scale
-        print 'pos', slide.slide_pos
-        k = {'d': .5, 't': 'out_quad'}
+        k = {'d': .5, 't': 'out_cubic'}
 
         # highlight slide
         self.unselect()
@@ -448,6 +552,19 @@ class MainScreen(Screen):
     def unselect(self):
         self.reset_animation()
         self.unselect_slides()
+
+    def get_selected_slide(self):
+        for child in self.tb_slides.children:
+            if child.selected:
+                return child
+        if len(self.tb_slides.children):
+            return self.tb_slides.children[0]
+
+    def get_slide_by_index(self, index):
+        index = index % len(self.tb_slides.children)
+        for x in self.tb_slides.children:
+            if x.index == index:
+                return x
 
     def unselect_slides(self):
         for child in self.tb_slides.children:
@@ -519,22 +636,13 @@ class Slide(Factory.ButtonBehavior, Factory.Image):
         self.texture = self.fbo.texture
         self.texture_size = self.texture.size
 
-        '''
-        fbo = self.ctrl.capture.fbo_thumb
-        fbo.ask_update()
+    def download_thumb(self):
+        fbo = self.fbo
         fbo.draw()
         fbo.bind()
         tmp = glReadPixels(0, 0, fbo.size[0], fbo.size[1], GL_RGBA, GL_UNSIGNED_BYTE)
         fbo.release()
-        if not self.texture:
-            self.texture = texture = Texture.create(fbo.size, 'rgb', 'ubyte')
-        else:
-            texture = self.texture
-        texture.blit_buffer(tmp, colorfmt='rgba')
-        self.texture = texture
-        self.texture_size = texture.size
         self.thumb = (fbo.size[0], fbo.size[1], tmp)
-        '''
 
     def upload_thumb(self):
         return

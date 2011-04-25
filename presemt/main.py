@@ -39,6 +39,9 @@ class PresemtApp(App):
         self.root.add_widget(screen)
         return screen
 
+    def show_start(self):
+        self.show('project.SelectorScreen')
+
     def build(self):
         self.root = FloatLayout()
         self.show('loading.LoadingScreen')
@@ -47,6 +50,9 @@ class PresemtApp(App):
         main = self.show('presentation.MainScreen')
         if len(argv) > 1:
             main.do_load(argv[1])
+
+        #main.do_publish()
+        main.do_edit()
 
 if __name__ in ('__main__', '__android__'):
     PresemtApp().run()
