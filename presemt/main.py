@@ -4,9 +4,11 @@ PreseMT - A presentation software
 '''
 
 import kivy
-kivy.require('1.0.5')
+kivy.require('1.0.6')
 
 from sys import argv
+from os.path import join, expanduser
+from kivy.utils import QueryDict
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 
@@ -19,6 +21,11 @@ class PresemtApp(App):
     def __init__(self):
         super(PresemtApp, self).__init__()
         self.screens = {}
+        self.config = QueryDict()
+
+        # home directory + PresmtWs
+        self.config.workspace_dir = join(
+            expanduser('~'), '.presemt', 'workspace')
 
     def create_empty_project(self):
         '''Create and start an empty project
