@@ -195,6 +195,7 @@
     on_press: ctx.callback(); self._do_press() if ctx.no_toggle else None
     #button_grab: True
     group: ctx.group if 'group' in ctx else None
+    visible: True
     no_toggle: ctx.no_toggle if 'no_toggle' in ctx else False
     canvas:
         Clear
@@ -206,7 +207,7 @@
             size: self.size
     Image:
         id: image
-        source: root.source
+        source: root.source if root.visible else 'data/transparent.png'
         size_hint: (None, None)
         size: root.size
         pos: root.pos
@@ -255,6 +256,11 @@
     container_edit: (container_objects, container_slides, config_container)
     container_publish: ()
     capture: capture
+
+    # toolbar links
+    btn_panel_text: btn_panel_text
+    btn_panel_image: btn_panel_image
+    btn_savefile: btn_savefile
 
     FboCapture:
         id: capture
@@ -307,12 +313,14 @@
             size_hint_y: None
 
             ToolbarButton:
+                id: btn_panel_text
                 group: 'planeobject_adder'
                 image: 'text'
                 callback: root.toggle_text_panel
                 no_toggle: False
 
             ToolbarButton:
+                id: btn_panel_image
                 group: 'planeobject_adder'
                 image: 'image'
                 callback: root.toggle_localfile_panel
@@ -324,13 +332,14 @@
             orientation: 'vertical'
 
             ToolbarButton:
-                image: 'publish'
-                callback: root.do_publish
+                id: btn_savefile
+                image: 'savefile'
+                callback: root.do_save
                 no_toggle: True
 
             ToolbarButton:
-                image: 'savefile'
-                callback: root.do_save
+                image: 'publish'
+                callback: root.do_publish
                 no_toggle: True
 
             ToolbarButton:

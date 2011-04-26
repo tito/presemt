@@ -9,11 +9,14 @@ from kivy.graphics import Color, Line
 from kivy.factory import Factory
 from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import NumericProperty, ObjectProperty, StringProperty, \
-        BooleanProperty, ListProperty
+        BooleanProperty, ListProperty, AliasProperty
 from kivy.animation import Animation
 from kivy.core.image import ImageLoader
 from kivy.graphics.opengl import glReadPixels, GL_RGBA, GL_UNSIGNED_BYTE
 from functools import partial
+from time import time
+from os.path import join
+from os import makedirs
 
 
 def prefix(exts):
@@ -91,6 +94,8 @@ class TextPanel(Panel):
 
     stack = ObjectProperty(None)
 
+    status_btn = 'btn_panel_text'
+
     def add_text(self):
         text = self.textinput.text.strip()
         self.textinput.text = ''
@@ -102,6 +107,7 @@ class TextPanel(Panel):
 
 
 class LocalFilePanel(Panel):
+    status_btn = 'btn_panel_image'
     imgtypes = ListProperty(prefix(SUPPORTED_IMG))
     vidtypes = ListProperty(prefix(SUPPORTED_VID))
     suptypes = ListProperty(prefix(SUPPORTED_IMG + SUPPORTED_VID))
@@ -200,6 +206,12 @@ class MainScreen(Screen):
 
     modalquit = ObjectProperty(None, allownone=True)
 
+    def _get_filename(self):
+        return self._filename
+    def _set_filename(self, filename):
+        self._filename = filename
+    filename = AliasProperty(_get_filename, _set_filename)
+
     is_edit = BooleanProperty(False)
 
     is_dirty = BooleanProperty(False)
@@ -218,7 +230,10 @@ class MainScreen(Screen):
 
     tb_slides = ObjectProperty(None)
 
+    btn_savefile = ObjectProperty(None)
+
     def __init__(self, **kwargs):
+        self._filename = None
         self._initial_load = True
         self._panel = None
         self._panel_text = None
@@ -270,6 +285,12 @@ class MainScreen(Screen):
             else:
                 return
             return True
+
+    def on_btn_savefile(self, instance, value):
+        value.visible = self.is_dirty
+
+    def on_is_dirty(self, instance, value):
+        self.btn_savefile.visible = value
 
     def leave_quit(self):
         self.remove_widget(self.modalquit)
@@ -373,11 +394,13 @@ class MainScreen(Screen):
     def _anim_show_panel(self, panel, *largs):
         if self._panel:
             self._panel.dispatch('on_close')
+            getattr(self, self._panel.status_btn).state = 'normal'
             self.config.remove_widget(self._panel)
         self._panel = panel
         if self._panel:
             self.config.add_widget(self._panel)
             self._panel.dispatch('on_open')
+            getattr(self, self._panel.status_btn).state = 'down'
             anim = Animation(width=350, d=.3, t='out_cubic')
             anim.start(self.config_container)
 
@@ -412,12 +435,19 @@ class MainScreen(Screen):
                 doc.create_video(**dict(attrs))
 
         for obj in reversed(self.tb_slides.children):
+            obj.download_thumb()
             doc.add_slide(obj.slide_pos, obj.slide_rotation,
                           obj.slide_scale, obj.thumb)
 
-        doc.save('output.json')
+        ws = self.app.config.workspace_dir
+        if not self.filename:
+            project_dir = join(ws, 'project_%d' % time())
+            makedirs(project_dir)
+            self._filename = join(project_dir, 'project.json')
+        doc.save(self.filename)
+        self.is_dirty = False
 
-    def do_load(self, filename):
+    def on_filename(self, instance, filename):
         doc = Document()
         doc.load(filename)
         self.plane.size = doc.infos.root_size

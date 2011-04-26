@@ -56,7 +56,7 @@ class PresemtApp(App):
         #self.show('project.SelectorScreen')
         main = self.show('presentation.MainScreen')
         if len(argv) > 1:
-            main.do_load(argv[1])
+            main.filename = argv[1]
 
         #main.do_publish()
         main.do_edit()
