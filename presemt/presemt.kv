@@ -201,10 +201,11 @@
         Clear
     canvas.before:
         Color:
-            rgba: 1, 1, 1, 0.5 if self.state == 'down' else 0
+            rgba: 1, 1, 1, .5 if self.state == 'down' else 0
         Rectangle:
             pos: self.pos
             size: self.size
+            source: 'data/highlight.png'
     Image:
         id: image
         source: root.source if root.visible else 'data/transparent.png'
@@ -254,7 +255,7 @@
     tb_objects: tb_objects
     tb_slides: tb_slides
     container_edit: (container_objects, container_slides, config_container)
-    container_publish: ()
+    container_publish: (container_controls, )
     capture: capture
 
     # toolbar links
@@ -278,7 +279,7 @@
             scale_min: 0.20
             scale_max: 20
             on_touch_down: root.unselect()
-            canvas.after:
+            canvas:
                 Color:
                     rgba: 1, 0, 0, .5
                 Line:
@@ -382,6 +383,34 @@
                 size_hint_y: None
                 id: tb_slides
 
+    # Player
+    BoxLayout:
+        id: container_controls
+        size_hint_y: None
+
+        ToolbarButton:
+            id: btn_panel_text
+            image: 'previous_alpha'
+            callback: root.go_previous_slide
+            no_toggle: True
+
+        Widget
+
+        ToolbarButton:
+            id: btn_panel_text
+            image: 'menu_alpha'
+            callback: root.do_edit
+            no_toggle: True
+
+        Widget
+
+        ToolbarButton:
+            id: btn_panel_text
+            image: 'next_alpha'
+            callback: root.go_next_slide
+            no_toggle: True
+
+
 
 <ModalQuit>:
     canvas:
@@ -392,16 +421,20 @@
             size: self.size
     BoxLayout:
         spacing: 20
-        size: 250, 50
+        size: 450, 50
         size_hint: None, None
         center_y: root.top - root.center_y * root.alpha
         center_x: root.center_x
 
         Button:
-            text: 'Cancel'
+            text: 'Return to edit'
             on_press: root.app.leave_quit()
 
         Button:
-            text: 'Save & Quit'
+            text: 'Discard changes'
             on_press: root.app.do_save(); root.app.ask_quit(force=True)
+
+        Button:
+            text: 'Save'
+            on_press: root.app.ask_quit(force=True)
 

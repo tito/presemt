@@ -329,7 +329,7 @@ class MainScreen(Screen):
         s = self.selection_points
         for child in self.plane.children:
             child.selected = point_inside_polygon(
-                child.center_x, child.center_y, s)
+                child.x, child.y, s)
 
     def selection_align(self):
         childs = [x for x in self.plane.children if x.selected]
@@ -580,6 +580,7 @@ class MainScreen(Screen):
         self._plane_animation.start(self.plane)
 
     def unselect(self):
+        self.selection_points = [0, 0]
         self.reset_animation()
         self.unselect_slides()
 
@@ -595,6 +596,18 @@ class MainScreen(Screen):
         for x in self.tb_slides.children:
             if x.index == index:
                 return x
+
+    def go_next_slide(self):
+        slide = self.get_selected_slide()
+        if not slide:
+            return
+        self.select_slide(self.get_slide_by_index(slide.index + 1))
+
+    def go_previous_slide(self):
+        slide = self.get_selected_slide()
+        if not slide:
+            return
+        self.select_slide(self.get_slide_by_index(slide.index - 1))
 
     def unselect_slides(self):
         for child in self.tb_slides.children:
@@ -796,8 +809,12 @@ class MainPlane(ScatterPlane):
 
         # grab the touch so we get all it later move events for sure
         touch.grab(self)
-        self._touches.append(touch)
-        self._last_touch_pos[touch] = touch.pos
+
+        if touch.is_double_tap:
+            self.ctrl.selection_points = self.to_local(*touch.pos)
+        else:
+            self._touches.append(touch)
+            self._last_touch_pos[touch] = touch.pos
 
         return True
 
@@ -814,9 +831,14 @@ class MainPlane(ScatterPlane):
                 touch.pop()
 
         # rotate/scale/translate
-        if touch in self._touches and touch.grab_current == self:
-            self.transform_with_touch(touch)
-            self._last_touch_pos[touch] = touch.pos
+        if touch.grab_current is self:
+            if touch.is_double_tap:
+                self.ctrl.selection_points.extend(
+                    self.to_local(*touch.pos))
+                self.ctrl.update_select()
+            elif touch in self._touches:
+                self.transform_with_touch(touch)
+                self._last_touch_pos[touch] = touch.pos
 
         return True
 

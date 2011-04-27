@@ -47,7 +47,6 @@ import json
 from time import time
 from kivy.utils import QueryDict
 
-
 class DocumentObject(QueryDict):
     __attrs__ = ('pos', 'size', 'rotation', 'scale', 'dtype')
     def __init__(self, **kwargs):
