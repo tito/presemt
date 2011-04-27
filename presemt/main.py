@@ -15,6 +15,7 @@ from kivy.uix.floatlayout import FloatLayout
 # even if it's not used in this current files
 # behaviours are used into kv
 import behaviours
+import fbocapture
 
 
 class PresemtApp(App):
