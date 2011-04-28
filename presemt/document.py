@@ -110,7 +110,11 @@ class Document(object):
                 slide['thumb'] = self.decode_thumb(thumb)
             self._slides.append(DocumentSlide(slide))
         for obj in j['objects']:
-            inst = Document.available_objects[obj['dtype']](**obj)
+            # No dict comprehensions in 2.6 yet :'-(
+            kwargs = {}
+            for k, v in obj.iteritems():
+                kwargs[str(k)] = v
+            inst = Document.available_objects[obj['dtype']](**kwargs)
             self._objects.append(inst)
 
     def save(self, filename):
