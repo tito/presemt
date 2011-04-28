@@ -35,9 +35,9 @@
         Color:
             rgba: 1, 1, 1, .3
         Rectangle:
-            texture: ctx.tex0
-            size: ctx['tex0'].size if ctx['tex0'] else (0, 0)
-            pos: (self.center_x - ctx['tex0'].size[0] / 2. + 20, self.center_y - ctx['tex0'].size[1] / 2.) if ctx['tex0'] else (0, 0)
+            texture: ctx.tex2
+            size: ctx['tex2'].size if ctx['tex2'] else (0, 0)
+            pos: (self.center_x - ctx['tex2'].size[0] / 2. + 20, self.center_y - ctx['tex2'].size[1] / 2.) if ctx['tex2'] else (0, 0)
         Color:
             rgba: 1, 1, 1, .7
         Rectangle:
@@ -47,9 +47,9 @@
         Color:
             rgb: 1, 1, 1
         Rectangle:
-            texture: ctx.tex2
-            size: ctx['tex2'].size if ctx['tex2'] else (0, 0)
-            pos: (self.center_x - ctx['tex2'].size[0] / 2., self.center_y - ctx['tex2'].size[1] / 2. + 20) if ctx['tex2'] else (0, 0)
+            texture: ctx.tex0
+            size: ctx['tex0'].size if ctx['tex0'] else (0, 0)
+            pos: (self.center_x - ctx['tex0'].size[0] / 2., self.center_y - ctx['tex0'].size[1] / 2. + 20) if ctx['tex0'] else (0, 0)
     BoxLayout:
         pos: root.pos
         orientation: 'vertical'
@@ -160,15 +160,7 @@
 #
 # Panels
 #
-[PanelTitle@Label]:
-    font_size: 24
-    text: ctx.title
-    size_hint_y: None
-    height: self.texture_size[1]
-    text_size: (self.width, None)
-    color: tb_color
-
-[PanelTitle2@Label]:
+[PanelTitle@Label]
     font_size: 24
     text: ctx.title
     size_hint_y: None
@@ -431,6 +423,7 @@
                 image: 'save'
                 callback: root.do_save
                 no_toggle: True
+                size: 56, 56
 
             ToolbarButton:
                 image: 'eye'
