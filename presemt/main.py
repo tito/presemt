@@ -11,6 +11,7 @@ from os.path import join, expanduser
 from kivy.utils import QueryDict
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
+from kivy.clock import Clock
 
 # even if it's not used in this current files
 # behaviours are used into kv
@@ -25,13 +26,12 @@ class PresemtApp(App):
         self.config = QueryDict()
 
         # home directory + PresmtWs
-        self.config.workspace_dir = join(
-            expanduser('~'), '.presemt', 'workspace')
-
-    def create_empty_project(self):
-        '''Create and start an empty project
-        '''
-        self.show('presentation.MainScreen')
+        try:
+            import android
+            self.config.workspace_dir = join('/sdcard', '.presemt', 'workspace')
+        except ImportError:
+            self.config.workspace_dir = join(
+                expanduser('~'), '.presemt', 'workspace')
 
     def show(self, name):
         '''Create and show a screen widget
@@ -47,20 +47,40 @@ class PresemtApp(App):
         self.root.add_widget(screen)
         return screen
 
+    def unload(self, name):
+        if name in self.screens:
+            del self.screens[name]
+
     def show_start(self):
         self.show('project.SelectorScreen')
+
+    def create_empty_project(self):
+        '''Create and start an empty project
+        '''
+        self.unload('presentation.MainScreen')
+        return self.show('presentation.MainScreen')
+
+    def play_project(self, filename):
+        project = self.create_empty_project()
+        project.filename = filename
+        project.do_publish()
+
+    def edit_project(self, filename):
+        project = self.create_empty_project()
+        project.filename = filename
+        project.do_edit()
 
     def build(self):
         self.root = FloatLayout()
         self.show('loading.LoadingScreen')
-        # ... do loading here ^^
-        #self.show('project.SelectorScreen')
-        main = self.show('presentation.MainScreen')
-        if len(argv) > 1:
-            main.filename = argv[1]
+        Clock.schedule_once(self._async_load, .5)
 
-        #main.do_publish()
-        main.do_edit()
+    def _async_load(self, dt):
+        # ... do loading here ^^
+        if len(argv) > 1:
+            self.edit_project(argv[1])
+        else:
+            self.show('project.SelectorScreen')
 
 if __name__ in ('__main__', '__android__'):
     PresemtApp().run()

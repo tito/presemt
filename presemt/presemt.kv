@@ -14,13 +14,90 @@
         Label:
             text: 'PreseMT is loading...'
 
+[SelectorItem@FloatLayout]:
+    size_hint_x: None
+    width: 256
+    canvas:
+        Color:
+            rgba: .12, .15, .16, .7
+        Rectangle:
+            size: self.size
+            pos: self.pos
+        Color:
+            rgba: 1, 1, 1, .3
+        Rectangle:
+            texture: ctx.tex2
+            size: ctx['tex0'].size if ctx['tex0'] else (0, 0)
+            pos: (self.center_x - ctx['tex0'].size[0] / 2. + 20, self.center_y - ctx['tex0'].size[1] / 2.) if ctx['tex0'] else (0, 0)
+        Color:
+            rgba: 1, 1, 1, .7
+        Rectangle:
+            texture: ctx.tex1
+            size: ctx['tex1'].size if ctx['tex1'] else (0, 0)
+            pos: (self.center_x - ctx['tex1'].size[0] / 2. - 20, self.center_y - ctx['tex1'].size[1] / 2. + 40) if ctx['tex1'] else (0, 0)
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            texture: ctx.tex2
+            size: ctx['tex2'].size if ctx['tex2'] else (0, 0)
+            pos: (self.center_x - ctx['tex2'].size[0] / 2., self.center_y - ctx['tex2'].size[1] / 2. + 20) if ctx['tex2'] else (0, 0)
+    BoxLayout:
+        pos: root.pos
+        orientation: 'vertical'
+        Label:
+            text: ctx.title
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            BoxLayout:
+                orientation: 'vertical'
+                padding: 10
+                Label:
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                    text: ctx.time
+                Label:
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                    font_size: 10
+                    color: (.7, .7, .7, .9)
+                    text: '%d slides, %d objects' % (ctx.slide_count, ctx.obj_count)
+
+            BoxLayout:
+                ToolbarButton:
+                    image: 'edit'
+                    callback: ctx.func_edit
+                    no_toggle: True
+                    size_hint: 1, 1
+
+                ToolbarButton:
+                    image: 'next'
+                    callback: ctx.func_play
+                    no_toggle: True
+                    size_hint: 1, 1
+
 <SelectorScreen>:
+    view: view
     AnchorLayout:
-        Image:
-            on_touch_down: root.app.create_empty_project()
-            source: 'data/add.png'
-            size: self.texture_size
-            size_hint: None, None
+        BoxLayout:
+            size_hint_y: None
+            height: 256
+            ScrollView:
+                id: scrollview
+                StackLayout:
+                    spacing: 20
+                    padding: 10
+                    orientation: 'tb-lr'
+                    id: view
+                    size_hint_x: None
+
+            AnchorLayout:
+                size_hint_x: None
+                width: 100
+                ToolbarButton:
+                    image: 'add'
+                    callback: root.app.create_empty_project
+                    no_toggle: True
 
 <PlaneObject>:
     size_hint: None, None
@@ -191,8 +268,8 @@
 [ToolbarButton@ToggleButton]:
     source: 'data/%s.png' % ctx.image
     size: image.texture_size
-    size_hint: None, None
-    on_press: ctx.callback(); self._do_press() if ctx.no_toggle else None
+    size_hint: ctx.size_hint if 'size_hint' in ctx else (None, None)
+    on_release: ctx.callback(); self._do_press() if ctx.no_toggle else None
     #button_grab: True
     group: ctx.group if 'group' in ctx else None
     visible: True
@@ -223,7 +300,7 @@
             size: self.norm_image_size
             pos: self.center_x - self.norm_image_size[0] / 2., self.center_y - self.norm_image_size[1] / 2.
 
-    height: self.norm_image_size[1] + label.height * 2
+    #height: self.norm_image_size[1] + label.height * 2
 
     Label:
         id: label

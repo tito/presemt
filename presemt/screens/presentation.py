@@ -54,6 +54,7 @@ class MainScreen(Screen):
         return self._filename
     def _set_filename(self, filename):
         self._filename = filename
+        return True
     filename = AliasProperty(_get_filename, _set_filename)
 
     is_edit = BooleanProperty(False)
