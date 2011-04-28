@@ -303,12 +303,14 @@
         color: ctx.color if 'color' in ctx else (1, 1, 1, 1)
         color: (ctx.color if 'color' in ctx else icon_color) if root.state == 'normal' else icon_color_selected
         size_hint: (None, None)
-        size: [x * .8 for x in self.texture_size]
+        size: [x * 0.8 for x in root.size]
         center: root.center
 
 
 <Slide>:
     button_grab: True
+    size_hint_y: None
+    height: 54
     canvas.after:
         Color:
             rgba: [0.5411, 0.6862, 0.2352, .1] if root.selected else (0, 0, 0, 0)
@@ -459,7 +461,7 @@
         id: container_slides
         orientation: 'vertical'
         size_hint_x: None
-        width: 64
+        width: 56
         pos_hint: {'right': 1}
 
         canvas:
@@ -467,16 +469,16 @@
                 rgba: tb_color
             Rectangle:
                 source: 'data/toolbar_right.png'
-                size: self.size
-                pos: self.pos
+                size: (64, self.height)
+                pos: (self.x - (64 - self.width), self.y)
 
         BoxLayout:
             size_hint_y: None
-            height: 80
             ToolbarButton:
                 image: 'add'
                 callback: root.create_slide
                 no_toggle: True
+                size: 56, 56
 
         ScrollView:
             scroll_timeout: 100
