@@ -1,12 +1,20 @@
 #:kivy 1.0
 #:import fc functools
 
+# Color scheme
+# dad6ca (light), 5f6062 (dark)
+#:set bg_source None
+#:set bg_color [x / 255. for x in (0x5f, 0x60, 0x62, 0xff)]
+#:set tb_color [x / 255. for x in (0xda, 0xd6, 0xca, 0xff)]
+#:set icon_color [x / 255. for x in (0x5f, 0x60, 0x62, 0x66)]
+#:set icon_color_selected [x / 255. for x in (0x5f, 0x60, 0x62, 0xff)]
+
 <Screen>:
     canvas:
         Color:
-            rgb: 1, 1, 1
+            rgba: bg_color
         Rectangle:
-            source: 'data/images/background.jpg'
+            source: bg_source
             size: self.size
 
 <LoadingScreen>:
@@ -19,14 +27,15 @@
     width: 256
     canvas:
         Color:
-            rgba: .12, .15, .16, .7
+            rgb: 1, 1, 1
         Rectangle:
+            source: 'data/selector.png'
             size: self.size
             pos: self.pos
         Color:
             rgba: 1, 1, 1, .3
         Rectangle:
-            texture: ctx.tex2
+            texture: ctx.tex0
             size: ctx['tex0'].size if ctx['tex0'] else (0, 0)
             pos: (self.center_x - ctx['tex0'].size[0] / 2. + 20, self.center_y - ctx['tex0'].size[1] / 2.) if ctx['tex0'] else (0, 0)
         Color:
@@ -44,7 +53,9 @@
     BoxLayout:
         pos: root.pos
         orientation: 'vertical'
+        padding: 8
         Label:
+            color: bg_color
             text: ctx.title
         BoxLayout:
             size_hint_y: None
@@ -54,16 +65,18 @@
                 padding: 10
                 Label:
                     size_hint_y: None
+                    color: bg_color
                     height: self.texture_size[1]
                     text: ctx.time
                 Label:
                     size_hint_y: None
                     height: self.texture_size[1]
                     font_size: 10
-                    color: (.7, .7, .7, .9)
+                    color: bg_color[:3] + [.6]
                     text: '%d slides, %d objects' % (ctx.slide_count, ctx.obj_count)
 
             BoxLayout:
+                padding: 9
                 ToolbarButton:
                     image: 'edit'
                     callback: ctx.func_edit
@@ -71,7 +84,7 @@
                     size_hint: 1, 1
 
                 ToolbarButton:
-                    image: 'next'
+                    image: 'right'
                     callback: ctx.func_play
                     no_toggle: True
                     size_hint: 1, 1
@@ -80,9 +93,27 @@
     view: view
     AnchorLayout:
         BoxLayout:
+            orientation: 'vertical'
             size_hint_y: None
-            height: 256
+
+            BoxLayout:
+
+                Label:
+                    text: 'PreseMT'
+                    text_size: self.width - 20, self.height
+                    font_size: 28
+                    color: tb_color
+                    size_hint_y: None
+                    height: 80
+
+                ToolbarButton:
+                    image: 'add'
+                    callback: root.app.create_empty_project
+                    no_toggle: True
+
             ScrollView:
+                size_hint_y: None
+                height: 276
                 id: scrollview
                 StackLayout:
                     spacing: 20
@@ -90,14 +121,6 @@
                     orientation: 'tb-lr'
                     id: view
                     size_hint_x: None
-
-            AnchorLayout:
-                size_hint_x: None
-                width: 100
-                ToolbarButton:
-                    image: 'add'
-                    callback: root.app.create_empty_project
-                    no_toggle: True
 
 <PlaneObject>:
     size_hint: None, None
@@ -143,19 +166,25 @@
     size_hint_y: None
     height: self.texture_size[1]
     text_size: (self.width, None)
+    color: tb_color
+
 [PanelTitle2@Label]:
     font_size: 24
     text: ctx.title
     size_hint_y: None
     height: self.texture_size[1]
     text_size: (self.width, None)
+    color: tb_color
 
 <Panel>:
-    x: 80
+    x: 56
     canvas:
         Color:
-            rgba: (.16, .18, .19, .9)
-        Rectangle:
+            rgba: bg_color
+            #(.16, .18, .19, .9)
+        BorderImage:
+            border: 0, 16, 0, 0
+            source: 'data/toolbar_left.png'
             pos: self.pos
             size: self.size
 
@@ -267,7 +296,7 @@
 
 [ToolbarButton@ToggleButton]:
     source: 'data/%s.png' % ctx.image
-    size: image.texture_size
+    size: ctx.size if 'size' in ctx else image.texture_size
     size_hint: ctx.size_hint if 'size_hint' in ctx else (None, None)
     on_release: ctx.callback(); self._do_press() if ctx.no_toggle else None
     #button_grab: True
@@ -276,19 +305,14 @@
     no_toggle: ctx.no_toggle if 'no_toggle' in ctx else False
     canvas:
         Clear
-    canvas.before:
-        Color:
-            rgba: 1, 1, 1, .5 if self.state == 'down' else 0
-        Rectangle:
-            pos: self.pos
-            size: self.size
-            source: 'data/highlight.png'
     Image:
         id: image
         source: root.source if root.visible else 'data/transparent.png'
+        color: ctx.color if 'color' in ctx else (1, 1, 1, 1)
+        color: (ctx.color if 'color' in ctx else icon_color) if root.state == 'normal' else icon_color_selected
         size_hint: (None, None)
-        size: root.size
-        pos: root.pos
+        size: [x * .8 for x in self.texture_size]
+        center: root.center
 
 
 <Slide>:
@@ -345,9 +369,9 @@
         Widget:
             canvas:
                 Color:
-                    rgb: 1, 1, 1
+                    rgba: bg_color
                 Rectangle:
-                    source: 'data/images/background.jpg'
+                    source: bg_source
                     size: self.size
 
         MainPlane:
@@ -362,26 +386,17 @@
                 Line:
                     points: root.selection_points
 
-    # Config menu
-    StencilView:
-        id: config_container
-        size_hint_x: None
-        x: 30
-        FloatLayout:
-            height: root.height
-            x: 30
-            id: config
-
     # Toolbar
     BoxLayout:
         id: container_objects
         orientation: 'vertical'
         size_hint_x: None
-        width: 80
+        width: 64
         canvas:
             Color:
-                rgba: (.12, .14, .15, .9)
+                rgb: tb_color
             Rectangle:
+                source: 'data/toolbar_left.png'
                 size: self.size
                 pos: self.pos
 
@@ -396,6 +411,7 @@
                 image: 'text'
                 callback: root.toggle_text_panel
                 no_toggle: False
+                size: 56, 56
 
             ToolbarButton:
                 id: btn_panel_image
@@ -403,6 +419,7 @@
                 image: 'image'
                 callback: root.toggle_localfile_panel
                 no_toggle: False
+                size: 56, 56
 
         Widget:
 
@@ -411,24 +428,37 @@
 
             ToolbarButton:
                 id: btn_savefile
-                image: 'savefile'
+                image: 'save'
                 callback: root.do_save
                 no_toggle: True
 
             ToolbarButton:
-                image: 'publish'
+                image: 'eye'
                 callback: root.do_publish
                 no_toggle: True
+                size: 56, 56
 
             ToolbarButton:
                 image: 'lock'
                 callback: root.toggle_lock
                 no_toggle: False
+                size: 56, 56
 
             ToolbarButton:
-                image: 'home'
+                image: 'left'
                 callback: root.ask_quit
                 no_toggle: True
+                size: 56, 56
+
+    # Config menu
+    StencilView:
+        id: config_container
+        size_hint_x: None
+        x: 56
+        FloatLayout:
+            height: root.height
+            x: 56
+            id: config
 
 
     # Slides
@@ -436,13 +466,14 @@
         id: container_slides
         orientation: 'vertical'
         size_hint_x: None
-        width: 80
+        width: 64
         pos_hint: {'right': 1}
 
         canvas:
             Color:
-                rgba: (.12, .14, .15, .9)
+                rgba: tb_color
             Rectangle:
+                source: 'data/toolbar_right.png'
                 size: self.size
                 pos: self.pos
 
@@ -467,25 +498,31 @@
 
         ToolbarButton:
             id: btn_panel_text
-            image: 'previous_alpha'
+            image: 'left'
             callback: root.go_previous_slide
             no_toggle: True
+            size: 64, 64
+            color: tb_color[:3] + [.2]
 
         Widget
 
         ToolbarButton:
             id: btn_panel_text
-            image: 'menu_alpha'
+            image: 'eye'
             callback: root.do_edit
             no_toggle: True
+            size: 64, 64
+            color: tb_color[:3] + [.2]
 
         Widget
 
         ToolbarButton:
             id: btn_panel_text
-            image: 'next_alpha'
+            image: 'right'
             callback: root.go_next_slide
             no_toggle: True
+            size: 64, 64
+            color: tb_color[:3] + [.2]
 
 
 

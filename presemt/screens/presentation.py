@@ -153,8 +153,13 @@ class MainScreen(Screen):
                 self.add_widget(modalquit)
                 Animation(alpha=1, d=.5, t='out_cubic').start(modalquit)
 
-    def _create_object(self, cls, touch, **kwargs):
+    def set_dirty(self):
+        if not self.is_edit:
+            return
         self.is_dirty = True
+
+    def _create_object(self, cls, touch, **kwargs):
+        self.set_dirty()
         kwargs.setdefault('rotation', -self.plane.rotation)
         kwargs.setdefault('scale', 1. / self.plane.scale)
         obj = cls(touch_follow=touch, ctrl=self, **kwargs)
@@ -359,7 +364,7 @@ class MainScreen(Screen):
     #
 
     def remove_object(self, obj):
-        self.is_dirty = True
+        self.set_dirty()
         self.plane.remove_widget(obj)
 
     def configure_object(self, obj):
@@ -377,7 +382,7 @@ class MainScreen(Screen):
         self._plane_animation = None
 
     def create_slide(self, pos=None, rotation=None, scale=None, thumb=None):
-        self.is_dirty = True
+        self.set_dirty()
         self.trigger_slides()
         plane = self.plane
         pos = pos or plane.pos
@@ -393,14 +398,15 @@ class MainScreen(Screen):
         self.update_slide_index()
 
     def remove_slide(self, slide):
-        self.is_dirty = True
+        self.set_dirty()
         self.unselect_slides()
         self.tb_slides.remove_widget(slide)
         self.update_slide_index()
 
     def select_slide(self, slide):
-        self.is_dirty = True
-        self.trigger_slides()
+        self.set_dirty()
+        if self.is_edit:
+            self.trigger_slides()
         k = {'d': .5, 't': 'out_cubic'}
 
         # highlight slide
