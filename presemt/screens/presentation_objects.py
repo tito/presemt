@@ -18,6 +18,11 @@ class PlaneObject(Scatter):
         if touch:
             touch.ud.scatter_follow = self
             touch.grab(self)
+        self.bind(transform=self._on_transform)
+
+    def _on_transform(self, instance, value):
+        if self.ctrl:
+            self.ctrl.set_dirty()
 
     def collide_point(self, x, y):
         x, y = self.to_local(x, y)

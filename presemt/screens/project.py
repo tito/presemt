@@ -14,8 +14,11 @@ class SelectorScreen(Screen):
 
     def on_parent(self, instance, value):
         if value:
-            self.view.clear_widgets()
-            self.search_documents()
+            self.refresh()
+
+    def refresh(self):
+        self.view.clear_widgets()
+        self.search_documents()
 
     def search_documents(self):
         ws = self.app.config.workspace_dir

@@ -383,7 +383,6 @@ class MainScreen(Screen):
 
     def create_slide(self, pos=None, rotation=None, scale=None, thumb=None):
         self.set_dirty()
-        self.trigger_slides()
         plane = self.plane
         pos = pos or plane.pos
         scale = scale or plane.scale
@@ -405,8 +404,6 @@ class MainScreen(Screen):
 
     def select_slide(self, slide):
         self.set_dirty()
-        if self.is_edit:
-            self.trigger_slides()
         k = {'d': .5, 't': 'out_cubic'}
 
         # highlight slide
@@ -469,6 +466,8 @@ class MainScreen(Screen):
             slide.index = idx
 
     def update_slides_capture(self, *largs):
+        if not self.is_edit:
+            return
         pos = self.plane.pos
         scale = self.plane.scale
         rotation = self.plane.rotation

@@ -1,13 +1,18 @@
 #:kivy 1.0
-#:import fc functools
 
 # Color scheme
-# dad6ca (light), 5f6062 (dark)
 #:set bg_source None
-#:set bg_color [x / 255. for x in (0x5f, 0x60, 0x62, 0xff)]
-#:set tb_color [x / 255. for x in (0xda, 0xd6, 0xca, 0xff)]
-#:set icon_color [x / 255. for x in (0x5f, 0x60, 0x62, 0x66)]
-#:set icon_color_selected [x / 255. for x in (0x5f, 0x60, 0x62, 0xff)]
+# dad6ca (light), 5f6062 (dark)
+##:set bg_color [x / 255. for x in (0x5f, 0x60, 0x62, 0xff)]
+##:set tb_color [x / 255. for x in (0xda, 0xd6, 0xca, 0xff)]
+##:set icon_color [x / 255. for x in (0x5f, 0x60, 0x62, 0x66)]
+##:set icon_color_selected [x / 255. for x in (0x5f, 0x60, 0x62, 0xff)]
+
+#:set bg_color            [x / 255. for x in (0x41, 0x41, 0x41, 0xff)]
+#:set icon_color          [x / 255. for x in (0xbb, 0xbb, 0xbb, 0xaa)]
+#:set icon_color_selected [x / 255. for x in (0xee, 0xee, 0xee, 0xff)]
+#:set tb_color            [x / 255. for x in (0x51, 0x51, 0x51, 0xff)]
+#:set title_color         [x / 255. for x in (0xee, 0xee, 0xee, 0xff)]
 
 <Screen>:
     canvas:
@@ -21,6 +26,7 @@
     AnchorLayout:
         Label:
             text: 'PreseMT is loading...'
+            color: title_color
 
 [SelectorItem@FloatLayout]:
     size_hint_x: None
@@ -97,30 +103,43 @@
             size_hint_y: None
 
             BoxLayout:
+                padding: 20
+                spacing: 20
+                id: firstbox
 
                 Label:
                     text: 'PreseMT'
                     text_size: self.width - 20, self.height
                     font_size: 28
-                    color: tb_color
+                    color: title_color
                     size_hint_y: None
-                    height: 80
+                    height: 56
+
+                ToolbarButton:
+                    image: 'refresh'
+                    callback: root.refresh
+                    no_toggle: True
 
                 ToolbarButton:
                     image: 'add'
                     callback: root.app.create_empty_project
                     no_toggle: True
 
+
             ScrollView:
                 size_hint_y: None
                 height: 276
                 id: scrollview
                 StackLayout:
-                    spacing: 20
+                    spacing: 10
                     padding: 10
                     orientation: 'tb-lr'
                     id: view
                     size_hint_x: None
+
+            Widget:
+                size_hint: None, None
+                size: firstbox.size
 
 <PlaneObject>:
     size_hint: None, None
@@ -166,7 +185,7 @@
     size_hint_y: None
     height: self.texture_size[1]
     text_size: (self.width, None)
-    color: tb_color
+    color: title_color
 
 <Panel>:
     x: 56
@@ -240,7 +259,7 @@
 
             ImageButtonPanel:
                 source: 'data/text-add.png'
-                callback: fc.partial(root.add_text)
+                callback: root.add_text
 
         ScrollView:
             scroll_timeout: 100
@@ -472,19 +491,23 @@
                 size: (64, self.height)
                 pos: (self.x - (64 - self.width), self.y)
 
-        BoxLayout:
-            size_hint_y: None
-            ToolbarButton:
-                image: 'add'
-                callback: root.create_slide
-                no_toggle: True
-                size: 56, 56
+        ToolbarButton:
+            image: 'add'
+            callback: root.create_slide
+            no_toggle: True
+            size: 56, 56
 
         ScrollView:
             scroll_timeout: 100
             StackLayout:
                 size_hint_y: None
                 id: tb_slides
+
+        ToolbarButton:
+            image: 'refresh'
+            callback: root.update_slides_capture
+            no_toggle: True
+            size: 56, 56
 
     # Player
     BoxLayout:
@@ -497,7 +520,7 @@
             callback: root.go_previous_slide
             no_toggle: True
             size: 64, 64
-            color: tb_color[:3] + [.2]
+            color: tb_color[:3] + [.6]
 
         Widget
 
@@ -507,7 +530,7 @@
             callback: root.do_edit
             no_toggle: True
             size: 64, 64
-            color: tb_color[:3] + [.2]
+            color: tb_color[:3] + [.6]
 
         Widget
 

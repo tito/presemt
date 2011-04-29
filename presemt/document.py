@@ -152,7 +152,7 @@ class Document(object):
 
         w, h, pixels = thumb
         # convert pixels to jpeg
-        surface = pygame.image.fromstring(pixels, (w, h), 'RGBA', True)
+        surface = pygame.image.fromstring(pixels, (w, h), 'RGB', True)
         fn = tempfile.mktemp('.jpg')
         pygame.image.save(surface, fn)
         # read jpeg

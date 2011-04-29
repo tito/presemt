@@ -44,6 +44,9 @@ class Slide(Factory.ButtonBehavior, Factory.Image):
             self.ctrl.select_slide(self)
 
     def update_capture(self, *largs):
+        edit_mode = self.ctrl.is_edit
+        self.ctrl.is_edit = False
+
         # update main fbo
         fbo = self.ctrl.capture.fbo
         fbo.ask_update()
@@ -58,22 +61,28 @@ class Slide(Factory.ButtonBehavior, Factory.Image):
         self.texture = self.fbo.texture
         self.texture_size = self.texture.size
 
+        self.ctrl.is_edit = edit_mode
+        self.ctrl.set_dirty()
+        self.thumb = None
+
     def download_thumb(self):
-        fbo = self.fbo
-        fbo.draw()
-        fbo.bind()
-        tmp = glReadPixels(0, 0, fbo.size[0], fbo.size[1], GL_RGBA, GL_UNSIGNED_BYTE)
-        fbo.release()
-        self.thumb = (fbo.size[0], fbo.size[1], tmp)
+        if self.thumb is None:
+            fbo = self.fbo
+            fbo.draw()
+            fbo.bind()
+            tmp = glReadPixels(0, 0, fbo.size[0], fbo.size[1], GL_RGBA, GL_UNSIGNED_BYTE)
+            fbo.release()
+            # remove alpha
+            tmp = list(tmp)
+            del tmp[3::4]
+            tmp = ''.join(tmp)
+            self.thumb = (fbo.size[0], fbo.size[1], tmp)
 
     def upload_thumb(self):
-        return
-        '''
         from kivy.graphics.texture import Texture
         w, h, pixels = self.thumb
         texture = Texture.create((w, h), 'rgb', 'ubyte')
         texture.blit_buffer(pixels, colorfmt='rgb')
         self.texture = texture
         self.texture_size = texture.size
-        '''
 
