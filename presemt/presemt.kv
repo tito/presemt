@@ -284,7 +284,7 @@
             title: 'Add a media'
 
         FileChooserIconView:
-            path: u'~'
+            path: root.path
             filters: root.imgtypes if img.only else root.vidtypes if vid.only else root.suptypes
             on_submit: root.ctrl.from_localfile(args[2], source=args[1][0])
 

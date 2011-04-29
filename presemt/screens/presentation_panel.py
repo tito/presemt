@@ -9,6 +9,11 @@ from kivy.factory import Factory
 
 from config import SUPPORTED_VID, SUPPORTED_IMG
 
+try:
+    import android
+    user_path = u'/sdcard'
+except ImportError:
+    user_path = u'~'
 
 def prefix(exts):
     return ['*.' + t for t in exts]
@@ -71,9 +76,15 @@ class TextPanel(Panel):
 
 
 class LocalFilePanel(Panel):
+
+    path = StringProperty(user_path)
+
     status_btn = 'btn_panel_image'
+
     imgtypes = ListProperty(prefix(SUPPORTED_IMG))
+
     vidtypes = ListProperty(prefix(SUPPORTED_VID))
+
     suptypes = ListProperty(prefix(SUPPORTED_IMG + SUPPORTED_VID))
 
 
