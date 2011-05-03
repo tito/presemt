@@ -6,7 +6,7 @@ from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import NumericProperty, ObjectProperty, \
-        BooleanProperty, ListProperty, AliasProperty
+        BooleanProperty, ListProperty, AliasProperty, OptionProperty
 from kivy.animation import Animation
 from functools import partial
 from time import time
@@ -56,6 +56,8 @@ class MainScreen(Screen):
         self._filename = filename
         return True
     filename = AliasProperty(_get_filename, _set_filename)
+
+    return_action = OptionProperty('edit', options=('edit', 'menu'))
 
     is_edit = BooleanProperty(False)
 
@@ -136,6 +138,12 @@ class MainScreen(Screen):
 
     def on_is_dirty(self, instance, value):
         self.btn_savefile.visible = value
+
+    def go_return_action(self):
+        if self.return_action == 'menu':
+            self.ask_quit(force=True)
+        else:
+            self.do_edit()
 
     def leave_quit(self):
         self.remove_widget(self.modalquit)
@@ -403,7 +411,6 @@ class MainScreen(Screen):
         self.update_slide_index()
 
     def select_slide(self, slide):
-        self.set_dirty()
         k = {'d': .5, 't': 'out_cubic'}
 
         # highlight slide

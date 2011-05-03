@@ -28,10 +28,10 @@ class PresemtApp(App):
         # home directory + PresmtWs
         try:
             import android
-            self.config.workspace_dir = join('/sdcard', '.presemt', 'workspace')
+            user_dir = '/sdcard'
         except ImportError:
-            self.config.workspace_dir = join(
-                expanduser('~'), '.presemt', 'workspace')
+            user_dir = expanduser('~')
+        self.config.workspace_dir = join(user_dir, 'Documents', 'PreseMT')
 
     def show(self, name):
         '''Create and show a screen widget
@@ -62,12 +62,15 @@ class PresemtApp(App):
 
     def play_project(self, filename):
         project = self.create_empty_project()
+        project.return_action = 'menu'
         project.filename = filename
         project.do_publish()
 
-    def edit_project(self, filename):
+    def edit_project(self, filename=None):
         project = self.create_empty_project()
-        project.filename = filename
+        if filename:
+            project.filename = filename
+        project.return_action = 'edit'
         project.do_edit()
 
     def build(self):

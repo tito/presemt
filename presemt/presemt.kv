@@ -1,7 +1,7 @@
 #:kivy 1.0
 
 # Color scheme
-#:set bg_source None
+#:set bg_source 'data/images/background.jpg'
 # dad6ca (light), 5f6062 (dark)
 ##:set bg_color [x / 255. for x in (0x5f, 0x60, 0x62, 0xff)]
 ##:set tb_color [x / 255. for x in (0xda, 0xd6, 0xca, 0xff)]
@@ -17,7 +17,7 @@
 <Screen>:
     canvas:
         Color:
-            rgba: bg_color
+            rgba: 1, 1, 1, 1
         Rectangle:
             source: bg_source
             size: self.size
@@ -122,7 +122,7 @@
 
                 ToolbarButton:
                     image: 'add'
-                    callback: root.app.create_empty_project
+                    callback: root.app.edit_project
                     no_toggle: True
 
 
@@ -323,7 +323,8 @@
         color: (ctx.color if 'color' in ctx else icon_color) if root.state == 'normal' else icon_color_selected
         size_hint: (None, None)
         size: [x * 0.8 for x in root.size]
-        center: root.center
+        x: root.center_x - 0.4 * root.width
+        y: root.center_y - 0.4 * root.height
 
 
 <Slide>:
@@ -384,7 +385,6 @@
                 Color:
                     rgba: bg_color
                 Rectangle:
-                    source: bg_source
                     size: self.size
 
         MainPlane:
@@ -515,7 +515,6 @@
         size_hint_y: None
 
         ToolbarButton:
-            id: btn_panel_text
             image: 'left'
             callback: root.go_previous_slide
             no_toggle: True
@@ -525,9 +524,8 @@
         Widget
 
         ToolbarButton:
-            id: btn_panel_text
             image: 'eye'
-            callback: root.do_edit
+            callback: root.go_return_action
             no_toggle: True
             size: 64, 64
             color: tb_color[:3] + [.6]
@@ -535,12 +533,11 @@
         Widget
 
         ToolbarButton:
-            id: btn_panel_text
             image: 'right'
             callback: root.go_next_slide
             no_toggle: True
             size: 64, 64
-            color: tb_color[:3] + [.2]
+            color: tb_color[:3] + [.6]
 
 
 
