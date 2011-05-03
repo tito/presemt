@@ -159,10 +159,12 @@ class MainPlane(ScatterPlane):
         super(MainPlane, self).transform_with_touch(touch)
 
     def on_scene_enter(self, child):
-        print 'entering:', child
+        # Reserved for further use; e.g. start video playback or whatever
+        pass
 
     def on_scene_leave(self, child):
-        print 'leaving:', child
+        # Reserved for further use; e.g. stop video playback or whatever
+        pass
 
     def cull_children(self, *args, **kwargs):
         no_event = kwargs.get('no_event', False)
