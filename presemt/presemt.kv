@@ -1,4 +1,5 @@
 #:kivy 1.0
+#:import fc functools
 
 # Color scheme
 #:set bg_source 'data/images/background.jpg'
@@ -28,7 +29,41 @@
             text: 'PreseMT is loading...'
             color: title_color
 
-[SelectorItem@FloatLayout]:
+<ModalSelect>:
+    canvas:
+        Color:
+            rgba: 0, 0, 0, self.alpha * 0.9
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        spacing: 20
+        size_hint: None, None
+        center_y: root.top - root.center_y * root.alpha
+        center_x: root.center_x
+
+        ToolbarButton:
+            image: 'left'
+            callback: root.app.leave_load
+            no_toggle: True
+            size: 56, 56
+
+        ToolbarButton:
+            image: 'edit'
+            callback: fc.partial(root.app.do_edit, root.filename)
+            no_toggle: True
+            size: 56, 56
+
+        ToolbarButton:
+            image: 'eye'
+            callback: fc.partial(root.app.do_play, root.filename)
+            no_toggle: True
+            size: 56, 56
+
+
+
+[SelectorItem@ButtonBehavior+FloatLayout]:
     size_hint_x: None
     width: 256
     canvas:
@@ -56,6 +91,9 @@
             texture: ctx.tex0
             size: ctx['tex0'].size if ctx['tex0'] else (0, 0)
             pos: (self.center_x - ctx['tex0'].size[0] / 2., self.center_y - ctx['tex0'].size[1] / 2. + 20) if ctx['tex0'] else (0, 0)
+    button_grab: True
+    on_press: ctx.app.ask_load(ctx.filename)
+
     BoxLayout:
         pos: root.pos
         orientation: 'vertical'
@@ -80,20 +118,6 @@
                     font_size: 10
                     color: bg_color[:3] + [.6]
                     text: '%d slides, %d objects' % (ctx.slide_count, ctx.obj_count)
-
-            BoxLayout:
-                padding: 9
-                ToolbarButton:
-                    image: 'edit'
-                    callback: ctx.func_edit
-                    no_toggle: True
-                    size_hint: 1, 1
-
-                ToolbarButton:
-                    image: 'right'
-                    callback: ctx.func_play
-                    no_toggle: True
-                    size_hint: 1, 1
 
 <SelectorScreen>:
     view: view
