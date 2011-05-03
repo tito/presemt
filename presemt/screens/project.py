@@ -25,9 +25,25 @@ class ModalSelect(FloatLayout):
 
 Factory.register('ModalSelect', cls=ModalSelect)
 
+class ModalConfirm(FloatLayout):
+
+    alpha = NumericProperty(0.)
+
+    filename = StringProperty(None)
+
+    app = ObjectProperty(None)
+
+    def on_touch_down(self, touch):
+        super(ModalConfirm, self).on_touch_down(touch)
+        return True
+
+Factory.register('ModalConfirm', cls=ModalConfirm)
+
 class SelectorScreen(Screen):
 
     modalselect = ObjectProperty(None, allownone=True)
+
+    modalconfirm = ObjectProperty(None, allownone=True)
 
     def __init__(self, **kwargs):
         super(SelectorScreen, self).__init__(**kwargs)
@@ -50,6 +66,30 @@ class SelectorScreen(Screen):
             return
         self.remove_widget(self.modalselect)
         self.modalselect = None
+
+    def delete_project(self, filename, force=False):
+        if force:
+            self.app.delete_project(filename)
+            self.refresh()
+            self.leave_load()
+            self.leave_delete()
+        else:
+            self.ask_delete(filename)
+
+    def leave_delete(self):
+        if not self.modalconfirm:
+            return
+        self.remove_widget(self.modalconfirm)
+        self.modalconfirm = None
+
+    def ask_delete(self, filename):
+        if self.modalconfirm:
+            self.leave_delete()
+        else:
+            self.modalconfirm = modalconfirm = ModalConfirm(
+                app=self, filename=filename)
+            self.add_widget(modalconfirm)
+            Animation(alpha=1, d=.5, t='out_cubic').start(modalconfirm)
 
     def refresh(self):
         self.view.clear_widgets()

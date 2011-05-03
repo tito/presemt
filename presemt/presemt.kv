@@ -29,6 +29,33 @@
             text: 'PreseMT is loading...'
             color: title_color
 
+<ModalConfirm>:
+    canvas:
+        Color:
+            rgba: 0, 0, 0, self.alpha * 0.9
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        spacing: 20
+        size_hint: None, None
+        center_y: root.top - root.center_y * root.alpha
+        center_x: root.center_x
+
+        ToolbarButton:
+            image: 'left'
+            callback: root.app.leave_delete
+            no_toggle: True
+            size: 56, 56
+
+        ToolbarButton:
+            image: 'thumbs-up'
+            callback: fc.partial(root.app.delete_project, root.filename, True)
+            no_toggle: True
+            size: 56, 56
+
+
 <ModalSelect>:
     canvas:
         Color:
@@ -46,6 +73,12 @@
         ToolbarButton:
             image: 'left'
             callback: root.app.leave_load
+            no_toggle: True
+            size: 56, 56
+
+        ToolbarButton:
+            image: 'trash'
+            callback: fc.partial(root.app.delete_project, root.filename)
             no_toggle: True
             size: 56, 56
 

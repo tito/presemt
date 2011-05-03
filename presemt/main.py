@@ -7,7 +7,8 @@ import kivy
 kivy.require('1.0.6')
 
 from sys import argv
-from os.path import join, expanduser
+from os.path import join, expanduser, dirname
+from shutil import rmtree
 from kivy.utils import QueryDict
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
@@ -53,6 +54,16 @@ class PresemtApp(App):
 
     def show_start(self):
         self.show('project.SelectorScreen')
+
+    def delete_project(self, filename):
+        if not filename.startswith(self.config.workspace_dir):
+            return False
+        directory = dirname(filename)
+        try:
+            rmtree(directory, True)
+        except OSError:
+            return False
+        return True
 
     def create_empty_project(self):
         '''Create and start an empty project
