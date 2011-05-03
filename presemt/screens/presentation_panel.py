@@ -68,6 +68,7 @@ class TextPanel(Panel):
     def add_text(self):
         text = self.textinput.text.strip()
         self.textinput.text = ''
+        self.textinput.focus = False
         if not text:
             return
         label = TextStackEntry(text=text, ctrl=self.ctrl, panel=self)

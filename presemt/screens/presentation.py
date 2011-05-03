@@ -430,7 +430,6 @@ class MainScreen(Screen):
         self._plane_animation = Animation(pos=slide.slide_pos,
                  rotation=slide_rotation,
                  scale=slide.slide_scale, **k)
-        self._plane_animation.bind(on_complete=slide.update_capture)
         self._plane_animation.bind(on_progress=self.plane.cull_children)
         self._plane_animation.start(self.plane)
 
