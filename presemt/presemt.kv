@@ -29,6 +29,14 @@
             text: 'PreseMT is loading...'
             color: title_color
 
+<Modal>:
+    canvas:
+        Color:
+            rgba: 0, 0, 0, self.alpha * 0.9
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
 <ModalConfirm>:
     canvas:
         Color:
@@ -55,15 +63,7 @@
             no_toggle: True
             size: 56, 56
 
-
 <ModalSelect>:
-    canvas:
-        Color:
-            rgba: 0, 0, 0, self.alpha * 0.9
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
     BoxLayout:
         spacing: 20
         size_hint: None, None
@@ -91,6 +91,40 @@
         ToolbarButton:
             image: 'eye'
             callback: fc.partial(root.app.do_play, root.filename)
+            no_toggle: True
+            size: 56, 56
+
+<ModalHelp>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            padding: 100
+            orientation: 'vertical'
+            BoxLayout:
+                Image:
+                    source: 'icon.png'
+                    width: 128
+                    size_hint_x: None
+                Label:
+                    id: label
+                    text: root.text_about
+            BoxLayout:
+                size_hint_y: None
+                height: 40
+                spacing: 40
+                Button:
+                    text: 'About'
+                    on_release: label.text = ''; label.text = root.text_about
+                Button:
+                    text: 'Project selector'
+                    on_release: label.text = ''; label.text = root.text_help_selector
+                Button:
+                    text: 'Main screen'
+                    on_release: label.text = ''; label.text = root.text_help_main
+
+        ToolbarButton:
+            image: 'left'
+            callback: root.app.leave_help
             no_toggle: True
             size: 56, 56
 
@@ -171,6 +205,11 @@
                     color: title_color
                     size_hint_y: None
                     height: 56
+
+                ToolbarButton:
+                    image: 'info'
+                    callback: root.show_help
+                    no_toggle: True
 
                 ToolbarButton:
                     image: 'refresh'
