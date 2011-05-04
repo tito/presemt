@@ -91,6 +91,12 @@ class MainScreen(Screen):
         super(MainScreen, self).__init__(**kwargs)
 
     def on_parent(self, instance, value):
+        try:
+            # don't do keyboard shorcut on android platform
+            import android
+            return
+        except ImportError:
+            pass
         if value is not None:
             Window.bind(on_keyboard=self.on_window_keyboard)
         else:
