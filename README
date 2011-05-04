@@ -1,0 +1,15 @@
+PreseMT
+=======
+
+How to run ?
+------------
+
+1. Download Kivy at http://kivy.org/, and follow installation instructions
+2. Execute the presemt/main.py file to run the application
+
+Thanks
+------
+
+We would like to thanks Thomas Hansen for his original idea and implementation
+with PyMT.
+
