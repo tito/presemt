@@ -143,6 +143,8 @@ class MainPlane(ScatterPlane):
         # Get minimal bounding circle around viewport
         # TODO If an optimization is required
         win = self.get_parent_window()
+        if not win:
+            return False
         cp = self.to_local(*win.center)
         #ww, wh = Window.size
         #topright = self.to_local(ww, wh)
