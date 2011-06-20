@@ -24,15 +24,15 @@ class PresemtApp(App):
     def __init__(self):
         super(PresemtApp, self).__init__()
         self.screens = {}
-        self.config = QueryDict()
 
-        # home directory + PresmtWs
+    def build_config(self, config):
+        config.add_section('paths')
         try:
             import android
             user_dir = '/sdcard'
         except ImportError:
             user_dir = expanduser('~')
-        self.config.workspace_dir = join(user_dir, 'Documents', 'PreseMT')
+        config.set('paths', 'workspace', join(user_dir, 'Documents', 'PreseMT'))
 
     def show(self, name):
         '''Create and show a screen widget
@@ -56,7 +56,7 @@ class PresemtApp(App):
         self.show('project.SelectorScreen')
 
     def delete_project(self, filename):
-        if not filename.startswith(self.config.workspace_dir):
+        if not filename.startswith(self.config.get('paths', 'workspace')):
             return False
         directory = dirname(filename)
         try:

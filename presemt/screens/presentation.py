@@ -303,7 +303,7 @@ class MainScreen(Screen):
             doc.add_slide(obj.slide_pos, obj.slide_rotation,
                           obj.slide_scale, obj.thumb)
 
-        ws = self.app.config.workspace_dir
+        ws = self.app.config.get('paths', 'workspace')
         if not self.filename:
             project_dir = join(ws, 'project_%d' % time())
             makedirs(project_dir)
@@ -312,6 +312,7 @@ class MainScreen(Screen):
         self.is_dirty = False
 
     def on_filename(self, instance, filename):
+        start = time()
         doc = Document()
         doc.load(filename)
         self.plane.size = doc.infos.root_size
@@ -334,6 +335,7 @@ class MainScreen(Screen):
             self.create_slide(pos=obj.pos, rotation=obj.rotation,
                               scale=obj.scale, thumb=obj.thumb)
         self.is_dirty = False
+        print '=== Loading time: %3.4s' % (time() - start)
 
     #
     # Presentation

@@ -99,7 +99,7 @@ class SelectorScreen(Screen):
         self.search_documents()
 
     def search_documents(self):
-        ws = self.app.config.workspace_dir
+        ws = self.app.config.get('paths', 'workspace')
         if not exists(ws):
             return
         docs = []
