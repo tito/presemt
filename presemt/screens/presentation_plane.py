@@ -57,6 +57,21 @@ class MainPlane(ScatterPlane):
     #
 
     def on_touch_down(self, touch):
+        if touch.device == 'wm_pen':
+            return self.on_touch_down_pen(touch)
+        return self.on_touch_down_touch(touch)
+
+    def on_touch_move(self, touch):
+        if touch.device == 'wm_pen':
+            return self.on_touch_move_pen(touch)
+        return self.on_touch_move_touch(touch)
+
+    def on_touch_up(self, touch):
+        if touch.device == 'wm_pen':
+            return self.on_touch_up_pen(touch)
+        return self.on_touch_up_touch(touch)
+
+    def on_touch_down_touch(self, touch):
         x, y = touch.x, touch.y
 
         if not self.children_locked:
@@ -79,7 +94,7 @@ class MainPlane(ScatterPlane):
 
         return True
 
-    def on_touch_move(self, touch):
+    def on_touch_move_touch(self, touch):
         x, y = touch.x, touch.y
         if not self.children_locked:
             # let the child widgets handle the event if they want
@@ -103,7 +118,7 @@ class MainPlane(ScatterPlane):
 
         return True
 
-    def on_touch_up(self, touch):
+    def on_touch_up_touch(self, touch):
         x, y = touch.x, touch.y
         if not self.children_locked:
             # if the touch isnt on the widget we do nothing, just try children
@@ -121,6 +136,31 @@ class MainPlane(ScatterPlane):
             del self._last_touch_pos[touch]
             self._touches.remove(touch)
 
+        return True
+
+    def on_touch_down_pen(self, pen):
+        if pen.is_double_tap:
+            self.canvas.remove_group('lines')
+            return True
+        pen.push()
+        pen.apply_transform_2d(self.to_local)
+        with self.canvas:
+            Color(1, 1, 1, group='lines')
+            pen.ud.line = Line(points=list(pen.pos), group='lines')
+        pen.pop()
+        return True
+
+    def on_touch_move_pen(self, pen):
+        if 'line' not in pen.ud:
+            return True
+        line = pen.ud.line
+        pen.push()
+        pen.apply_transform_2d(self.to_local)
+        line.points = line.points + list(pen.pos)
+        pen.pop()
+        return True
+
+    def on_touch_up_pen(self, pen):
         return True
 
     #
